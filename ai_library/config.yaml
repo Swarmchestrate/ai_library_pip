@@ -2,7 +2,7 @@
 pipeline_type: "xgb"
 window: 96
 horizon: 96
-stride: 1
+stride: 96
 prediction_target: "cpu_util_instance"
 STANDARD_METRICS:
   - "cpu_util_instance"
@@ -25,7 +25,7 @@ xgb:
   model_params:
     n_estimators: 100
     max_depth: 4
-    learning_rate: 0.1
+    learning_rate: 0.01
     subsample: 0.8
     colsample_bytree: 0.8
     min_child_weight: 3

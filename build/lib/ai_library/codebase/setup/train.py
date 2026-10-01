@@ -13,7 +13,7 @@ def get_last_window_data_and_train():
     train_window = config["window"]
     train_horizon = config["horizon"]
     splits = config.get("splits", [0.7, 0.15, 0.15])
-    stride = config.get("stride", 1)
+    stride = config.get("stride", train_horizon)
     parquet_path = config["parquet_path"]
     resample_frequency = config["data_frequency"]
     pipeline_type = config["pipeline_type"]
@@ -27,6 +27,7 @@ def get_last_window_data_and_train():
     elif pipeline_type == "itransformer":
         pipeline = iTransformer_pipeline()
     df = pd.read_parquet(parquet_path)
+    print(df.head())
     # Basic safety checks: parquet should contain time column and enough rows
     if df.empty:
         raise ValueError(f"No data found in parquet file: {parquet_path}")
@@ -37,12 +38,14 @@ def get_last_window_data_and_train():
     if pivot_df_bool:
         df = pivot_df(df)
     print(df.head())
-    df = df.set_index("ts").resample(resample_frequency).mean().interpolate("linear").bfill().ffill().reset_index()
-    df = df.tail(parquet_train_size)
-    if len(df) < required_rows:
-            raise ValueError(
-                f"Not enough rows in parquet file: found {len(df)}, need at least {required_rows} (window + horizon + stride)/min(splits)"
-            )
+    df = df.set_index("ts").resample(resample_frequency).mean(numeric_only=True).interpolate("linear").bfill().ffill().reset_index()
+    if parquet_train_size:
+        df = df.tail(parquet_train_size)
+    print(df.head())
+    #if len(df) < required_rows:
+    #        raise ValueError(
+    #            f"Not enough rows in parquet file: found {len(df)}, need at least {required_rows} (window + horizon + stride)/min(splits)"
+    #        )
     if pipeline_type == "gmlp":
         dls, test_dl = pipeline.preprocess_splits(df, targets, splits, train_horizon, train_window, stride, cols_to_drop)
         model, rmse, conformal_q = pipeline.train(dls, test_dl)

@@ -21,7 +21,7 @@ def inference():
     window = config["window"]
     targets = config["prediction_target"]
     cols_to_drop = config.get("cols_to_drop", [])
-
+    resample_frequency = config.get("data_frequency")
     if pipeline_type == "gmlp":
         pipeline = gMLP_pipeline()
         print("loading gMLP model from", os.path.join(saved_files_dir, "trained_model_gmlp.pth"))
@@ -66,15 +66,14 @@ def inference():
     pivot_df_bool = config.get("pivot_df")
     if pivot_df_bool:
         df = pivot_df(df)
-    df = df.set_index("ts")
-
-    # Create a full time index from min to max timestamp
-    full_idx = pd.date_range(start=df.index.min(), end=max_ts, freq=data_frequency)
-    df = df.reindex(full_idx)
+    if "ts" not in df.columns and df.index.name == "ts":
+        df = df.reset_index()
+    elif "ts" not in df.columns:
+        raise KeyError(f"Column 'ts' missing from data after pivoting. Available columns: {list(df.columns)}")
 
     # Forward fill trailing values (so the newest polled metrics extend to the latest timestamp)
-    df = df.interpolate("linear").ffill().bfill().reset_index().rename(columns={"index": "ts"})
-
+    df = df.set_index("ts").resample(resample_frequency).mean(numeric_only=True).interpolate("linear").bfill().ffill().reset_index()
+    print(df.head())
     last_window = df.iloc[-window:]
     horizon = config.get("horizon")
     first_predicted = last_window.iloc[-1]["ts"] + pd.Timedelta(seconds=data_frequency.total_seconds())

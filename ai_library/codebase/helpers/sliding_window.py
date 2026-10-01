@@ -35,4 +35,3 @@ def apply_sliding_window(df, targets, n_future, n_past, stride, exclude_columns,
     )(scaled_df)
 
     return [X_data.astype(np.float32), y_data.astype(np.float32), scaler, scaler_labels]
-

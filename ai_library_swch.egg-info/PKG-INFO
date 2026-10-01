@@ -76,12 +76,12 @@ Requires-Dist: xgboost==3.2.0
 
 ### Install
 ```bash
-pip install ai-library-swch==0.1.1 
+pip install ai-library-swch
 ```
-a safe python version is 3.12.3
+A safe Python version is 3.12.3
 
 ### Configuration
-this is an example of how config can be printed and updated.
+This is an example of how config can be printed and updated.
 ```python
 from ai_library import validate_config, update_config, show_config
 
@@ -104,19 +104,19 @@ nohup python3 -c "from ai_library import record; record.main()" > record.log 2>&
 nohup is not necessary, but make sure to run the recorder in the background. 
 
 ### Train and Infer
-import the functions:
+Import the functions:
 ```python
 from ai_library import train, infer
 ```
 
 # Manually use train (no cron)
-the standard way is to use the cron functions to train in intervals. This might still be useful, for example when switching models.
+The standard way is to use the cron functions to train in intervals. This might still be useful, for example when switching models.
 ```python
 train()
 ```
 
 ### Cron Scheduling
-add_to_cron creates a cron job that runs the train function in intervals.
+Add_to_cron creates a cron job that runs the train function in intervals.
 ```python
 import ai_library.codebase.setup.cron_manager as cron_manager
 
@@ -125,7 +125,9 @@ cron_manager.remove_from_cron()
 ```
 
 # Inference
-after a trained model is accessible via the path, that is given in the config file, inference can be applied:
+After a trained model is accessible via the path, that is given in the config file, inference can be applied:
 ```python
 predictions, first_predicted, last_predicted, data_frequency, conformal_q = infer()
 ```
+# git link:
+https://github.com/maxsotto1/ai_library_pip

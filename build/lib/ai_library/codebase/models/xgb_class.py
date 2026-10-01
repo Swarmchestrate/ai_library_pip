@@ -7,6 +7,7 @@ import os
 import yaml
 from pathlib import Path
 from ..helpers.to_saved_files import atomic_save
+import matplotlib.pyplot as plt
 class XGBoost_pipeline:
         def __init__(self):
             self.scaler_y = None
@@ -93,6 +94,16 @@ class XGBoost_pipeline:
             preds = self.scaler_y.inverse_transform(preds)
             targets = self.scaler_y.inverse_transform((y_test))
             rmse = sqrt(mean_squared_error(preds, targets))
+
+            plt.figure(figsize=(8, 3))
+            plt.plot(targets.reshape(-1,1), label="target")
+            plt.plot(preds.reshape(-1,1), label="preds", alpha=0.7)
+            plt.legend()
+            plt.xlabel("forecast step (aligned)")
+            plt.ylabel("cpu_01_busy")
+            plt.tight_layout()
+            plt.savefig(f"{self.saved_files_dir}/predictions_xgb.png")
+            plt.close()
             self.model = model
             atomic_save(self.model, f"{self.saved_files_dir}/trained_model_xgb.pkl")
             atomic_save(self.scaler_x, f"{self.saved_files_dir}/scaler_x_xgb.pkl")

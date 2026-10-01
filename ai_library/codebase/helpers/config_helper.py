@@ -60,7 +60,6 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
 		"poll_interval_seconds",
 		"flush_max_rows",
 		"flush_max_seconds",
-		"parquet_train_size",
 	]
 	missing = [k for k in required_keys if k not in config or config[k] in (None, "")]
 	if missing:
@@ -111,8 +110,9 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
 		raise ValueError("flush_max_seconds must be a positive number")
 
 	parquet_train_size = config.get("parquet_train_size")
-	if not isinstance(parquet_train_size, int) or parquet_train_size <= 0:
-		raise ValueError("parquet_train_size must be a positive integer")
+	if parquet_train_size is not None:
+		if not isinstance(parquet_train_size, int) or parquet_train_size <= 0:
+			raise ValueError("parquet_train_size must be a positive integer or None")
 
 	# Optional: verify model-specific sections are mappings if present
 	for model_key in ("gmlp", "xgb"):

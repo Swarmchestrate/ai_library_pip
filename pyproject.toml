@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-library-swch"
-version = "0.1.2"
+version = "0.1.3"
 description = "AI helper utilities and models"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = "==3.12.3"
