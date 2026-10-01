@@ -16,141 +16,159 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import re
 import yaml
-
 def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
-	"""Load and validate a YAML config file.
+    """Load and validate a YAML config file.
 
-	Args:
-		config_path: Path to the YAML configuration file.
+    Args:
+        config_path: Path to the YAML configuration file.
 
-	Returns:
-		The parsed configuration dictionary.
+    Returns:
+        The parsed configuration dictionary.
 
-	Raises:
-		FileNotFoundError: if the config file does not exist.
-		ValueError: if required keys are missing or types/values are invalid.
-	"""
-	# Default to the package's `config.yaml` located at the package root
-	if config_path is None:
-		package_root = Path(__file__).resolve().parent.parent.parent
-		p = package_root / "config.yaml"
-	else:
-		p = Path(config_path)
+    Raises:
+        FileNotFoundError: if the config file does not exist.
+        ValueError: if required keys are missing or types/values are invalid.
+    """
+    # Default to the package's `config.yaml` located at the package root
+    if config_path is None:
+        package_root = Path(__file__).resolve().parent.parent.parent
+        p = package_root / "config.yaml"
+    else:
+        p = Path(config_path)
 
-	if not p.exists():
-		raise FileNotFoundError(f"Configuration file not found: {p}")
+    if not p.exists():
+        raise FileNotFoundError(f"Configuration file not found: {p}")
 
-	with p.open("r", encoding="utf-8") as f:
-		config = yaml.safe_load(f) or {}
+    with p.open("r", encoding="utf-8") as f:
+        config = yaml.safe_load(f) or {}
 
-	required_keys = [
-		"window",
-		"horizon",
-		"prediction_target",
-		"pipeline_type",
-		"splits",
-		"cols_to_drop",
-		"stride",
-		"parquet_path",
-		"data_frequency",
-		"retrain_frequency",
-		"STANDARD_METRICS",
-		"data_dir",
-		"saved_files_dir",
-		"poll_interval_seconds",
-		"flush_max_rows",
-		"flush_max_seconds",
-	]
-	missing = [k for k in required_keys if k not in config or config[k] in (None, "")]
-	if missing:
-		raise ValueError(f"Missing required config values: {', '.join(missing)}")
+    # Check key presence first
+    required_keys = [
+        "window",
+        "horizon",
+        "prediction_target",
+        "pipeline_type",
+        "splits",
+        "cols_to_drop",
+        "stride",
+        "parquet_path",
+        "data_frequency",
+        "retrain_frequency",
+        "STANDARD_METRICS",
+        "data_dir",
+        "saved_files_dir",
+        "poll_interval_seconds",
+        "flush_max_rows",
+        "flush_max_seconds",
+    ]
+    
+    # 1. Verify all required keys are present in config dict
+    missing_keys = [k for k in required_keys if k not in config]
+    if missing_keys:
+        raise ValueError(f"Missing required config keys: {', '.join(missing_keys)}")
 
-	pipeline_type = config["pipeline_type"]
-	if pipeline_type not in {"gmlp", "xgb", "itransformer"}:
-		raise ValueError(f"Unsupported pipeline_type: {pipeline_type}")
+    # 2. Verify non-target required keys are not None or empty string
+    empty_keys = [
+        k for k in required_keys 
+        if k != "prediction_target" and config[k] in (None, "")
+    ]
+    if empty_keys:
+        raise ValueError(f"Config keys cannot be empty or None: {', '.join(empty_keys)}")
 
-	for key in ("window", "horizon", "stride"):
-		value = config[key]
-		if not isinstance(value, int) or value <= 0:
-			raise ValueError(f"{key} must be a positive integer, got {value!r}")
+    # 3. Explicitly validate prediction_target (None, str, or list/tuple of str)
+    target = config.get("prediction_target")
+    if target is not None:
+        if not isinstance(target, (str, list, tuple)):
+            raise ValueError("prediction_target must be None, a string, or a list of strings")
+        if isinstance(target, (list, tuple)) and not all(isinstance(t, str) for t in target):
+            raise ValueError("All items in prediction_target list must be strings")
 
-	splits = config["splits"]
-	if not isinstance(splits, (list, tuple)) or len(splits) != 3:
-		raise ValueError(f"splits must be a list or tuple of 3 values, got {splits!r}")
-	if any(not isinstance(v, (int, float)) or not 0 < v < 1 for v in splits):
-		raise ValueError(f"Each split value must be between 0 and 1, got {splits!r}")
-	total = float(sum(splits))
-	eps = 1e-8
-	if total > 1.0 + eps:
-		raise ValueError(f"Split values sum to more than 1.0 (got {total})")
+    pipeline_type = config["pipeline_type"]
+    if pipeline_type not in {"gmlp", "xgb", "itransformer"}:
+        raise ValueError(f"Unsupported pipeline_type: {pipeline_type}")
 
-	if not isinstance(config["cols_to_drop"], list):
-		raise ValueError("cols_to_drop must be a list")
+    for key in ("window", "horizon", "stride"):
+        value = config[key]
+        if not isinstance(value, int) or value <= 0:
+            raise ValueError(f"{key} must be a positive integer, got {value!r}")
 
-	if not isinstance(config.get("STANDARD_METRICS"), list):
-		raise ValueError("STANDARD_METRICS must be a list of metric names")
+    splits = config["splits"]
+    if not isinstance(splits, (list, tuple)) or len(splits) != 3:
+        raise ValueError(f"splits must be a list or tuple of 3 values, got {splits!r}")
+    if any(not isinstance(v, (int, float)) or not 0 < v < 1 for v in splits):
+        raise ValueError(f"Each split value must be between 0 and 1, got {splits!r}")
+    total = float(sum(splits))
+    eps = 1e-8
+    if total > 1.0 + eps:
+        raise ValueError(f"Split values sum to more than 1.0 (got {total})")
 
-	for key in ("data_frequency", "retrain_frequency"):
-		value = config.get(key)
-		if not isinstance(value, str) or not re.fullmatch(r"\d+[sm]", value):
-			raise ValueError(f"{key} must be a string like '30s' or '5m', got {value!r}")
+    if not isinstance(config["cols_to_drop"], list):
+        raise ValueError("cols_to_drop must be a list")
 
-	# data_dir and saved_files_dir should be non-empty strings
-	for dir_key in ("data_dir", "saved_files_dir", "parquet_path"):
-		if not isinstance(config.get(dir_key), str) or not config.get(dir_key).strip():
-			raise ValueError(f"{dir_key} must be a non-empty string path")
+    if not isinstance(config.get("STANDARD_METRICS"), list):
+        raise ValueError("STANDARD_METRICS must be a list of metric names")
 
-	if not isinstance(config.get("poll_interval_seconds"), (int, float)) or config.get("poll_interval_seconds") <= 0:
-		raise ValueError("poll_interval_seconds must be a positive number")
+    for key in ("data_frequency", "retrain_frequency"):
+        value = config.get(key)
+        if not isinstance(value, str) or not re.fullmatch(r"\d+[sm]", value):
+            raise ValueError(f"{key} must be a string like '30s' or '5m', got {value!r}")
 
-	if not isinstance(config.get("flush_max_rows"), int) or config.get("flush_max_rows") <= 0:
-		raise ValueError("flush_max_rows must be a positive integer")
+    # data_dir and saved_files_dir should be non-empty strings
+    for dir_key in ("data_dir", "saved_files_dir", "parquet_path"):
+        if not isinstance(config.get(dir_key), str) or not config.get(dir_key).strip():
+            raise ValueError(f"{dir_key} must be a non-empty string path")
 
-	if not isinstance(config.get("flush_max_seconds"), (int, float)) or config.get("flush_max_seconds") <= 0:
-		raise ValueError("flush_max_seconds must be a positive number")
+    if not isinstance(config.get("poll_interval_seconds"), (int, float)) or config.get("poll_interval_seconds") <= 0:
+        raise ValueError("poll_interval_seconds must be a positive number")
 
-	parquet_train_size = config.get("parquet_train_size")
-	if parquet_train_size is not None:
-		if not isinstance(parquet_train_size, int) or parquet_train_size <= 0:
-			raise ValueError("parquet_train_size must be a positive integer or None")
+    if not isinstance(config.get("flush_max_rows"), int) or config.get("flush_max_rows") <= 0:
+        raise ValueError("flush_max_rows must be a positive integer")
 
-	# Optional: verify model-specific sections are mappings if present
-	for model_key in ("gmlp", "xgb"):
-		if model_key in config and config[model_key] is not None and not isinstance(config[model_key], dict):
-			raise ValueError(f"{model_key} section must be a mapping of parameters")
+    if not isinstance(config.get("flush_max_seconds"), (int, float)) or config.get("flush_max_seconds") <= 0:
+        raise ValueError("flush_max_seconds must be a positive number")
 
-	# Validate common hyperparameters for supported model sections
-	gmlp_params = config.get("gmlp", {}).get("model_params", {}) if isinstance(config.get("gmlp"), dict) else {}
-	xgb_params = config.get("xgb", {}).get("model_params", {}) if isinstance(config.get("xgb"), dict) else {}
+    parquet_train_size = config.get("parquet_train_size")
+    if parquet_train_size is not None:
+        if not isinstance(parquet_train_size, int) or parquet_train_size <= 0:
+            raise ValueError("parquet_train_size must be a positive integer or None")
 
-	if gmlp_params:
-		for key in ("d_model", "d_ffn", "depth", "patch_size", "epochs"):
-			if key in gmlp_params and (not isinstance(gmlp_params[key], int) or gmlp_params[key] <= 0):
-				raise ValueError(f"gmlp.model_params.{key} must be a positive integer")
-		for key in ("lr", "patience"):
-			if key in gmlp_params and (not isinstance(gmlp_params[key], (int, float)) or gmlp_params[key] <= 0):
-				raise ValueError(f"gmlp.model_params.{key} must be a positive number")
+    # Optional: verify model-specific sections are mappings if present
+    for model_key in ("gmlp", "xgb"):
+        if model_key in config and config[model_key] is not None and not isinstance(config[model_key], dict):
+            raise ValueError(f"{model_key} section must be a mapping of parameters")
 
-	if xgb_params:
-		for key in ("n_estimators", "max_depth", "min_child_weight"):
-			if key in xgb_params and (not isinstance(xgb_params[key], int) or xgb_params[key] <= 0):
-				raise ValueError(f"xgb.model_params.{key} must be a positive integer")
-		for key in ("learning_rate", "subsample", "colsample_bytree", "gamma", "reg_lambda", "reg_alpha"):
-			if key in xgb_params and (not isinstance(xgb_params[key], (int, float)) or xgb_params[key] < 0):
-				raise ValueError(f"xgb.model_params.{key} must be a positive number")
-		if "objective" in xgb_params and not isinstance(xgb_params["objective"], str):
-			raise ValueError("xgb.model_params.objective must be a string")
-		if "tree_method" in xgb_params and not isinstance(xgb_params["tree_method"], str):
-			raise ValueError("xgb.model_params.tree_method must be a string")
-		if "predictor" in xgb_params and not isinstance(xgb_params["predictor"], str):
-			raise ValueError("xgb.model_params.predictor must be a string")
-		if "random_state" in xgb_params and (not isinstance(xgb_params["random_state"], int) or xgb_params["random_state"] < 0):
-			raise ValueError("xgb.model_params.random_state must be a non-negative integer")
-		if "n_jobs" in xgb_params and (not isinstance(xgb_params["n_jobs"], int)):
-			raise ValueError("xgb.model_params.n_jobs must be an integer")
+    # Validate common hyperparameters for supported model sections
+    gmlp_params = config.get("gmlp", {}).get("model_params", {}) if isinstance(config.get("gmlp"), dict) else {}
+    xgb_params = config.get("xgb", {}).get("model_params", {}) if isinstance(config.get("xgb"), dict) else {}
 
-	print(f"Configuration file {p} validated successfully.")
-	return config
+    if gmlp_params:
+        for key in ("d_model", "d_ffn", "depth", "patch_size", "epochs"):
+            if key in gmlp_params and (not isinstance(gmlp_params[key], int) or gmlp_params[key] <= 0):
+                raise ValueError(f"gmlp.model_params.{key} must be a positive integer")
+        for key in ("lr", "patience"):
+            if key in gmlp_params and (not isinstance(gmlp_params[key], (int, float)) or gmlp_params[key] <= 0):
+                raise ValueError(f"gmlp.model_params.{key} must be a positive number")
+
+    if xgb_params:
+        for key in ("n_estimators", "max_depth", "min_child_weight"):
+            if key in xgb_params and (not isinstance(xgb_params[key], int) or xgb_params[key] <= 0):
+                raise ValueError(f"xgb.model_params.{key} must be a positive integer")
+        for key in ("learning_rate", "subsample", "colsample_bytree", "gamma", "reg_lambda", "reg_alpha"):
+            if key in xgb_params and (not isinstance(xgb_params[key], (int, float)) or xgb_params[key] < 0):
+                raise ValueError(f"xgb.model_params.{key} must be a positive number")
+        if "objective" in xgb_params and not isinstance(xgb_params["objective"], str):
+            raise ValueError("xgb.model_params.objective must be a string")
+        if "tree_method" in xgb_params and not isinstance(xgb_params["tree_method"], str):
+            raise ValueError("xgb.model_params.tree_method must be a string")
+        if "predictor" in xgb_params and not isinstance(xgb_params["predictor"], str):
+            raise ValueError("xgb.model_params.predictor must be a string")
+        if "random_state" in xgb_params and (not isinstance(xgb_params["random_state"], int) or xgb_params["random_state"] < 0):
+            raise ValueError("xgb.model_params.random_state must be a non-negative integer")
+        if "n_jobs" in xgb_params and (not isinstance(xgb_params["n_jobs"], int)):
+            raise ValueError("xgb.model_params.n_jobs must be an integer")
+
+    print(f"Configuration file {p} validated successfully.")
+    return config
 
 
 def update_config(config_path: Optional[Path], updates: Any) -> None:
