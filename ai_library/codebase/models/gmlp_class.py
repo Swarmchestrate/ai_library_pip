@@ -207,31 +207,28 @@ class gMLP_pipeline:
 
     def preprocess_inference(
         self, df, targets=None, n_past=288, exclude_columns=None
-    ):
+        ):
         exclude_cols = list(exclude_columns or [])
-        df_full = df.drop(columns=exclude_cols)
+        
+        # 1. Drop excluded/metadata columns (e.g. 'ts')
+        df_full = df.drop(columns=exclude_cols, errors="ignore")
 
-        if not targets:
-            target_cols = list(df_full.columns)
-        else:
-            target_cols = (
-                [targets] if isinstance(targets, str) else list(targets)
-            )
+        # 2. Align DataFrame columns with scaler_x.feature_names_in_ if available
+        if hasattr(self.scaler_x, "feature_names_in_"):
+            df_full = df_full.reindex(columns=self.scaler_x.feature_names_in_, fill_value=0.0)
 
-        feature_cols = [c for c in df_full.columns if c not in target_cols]
+        # 3. Transform the entire DataFrame using scaler_x (since it was fitted on all columns during training)
+        X = self.scaler_x.transform(df_full)
 
-        if feature_cols:
-            X_feat = self.scaler_x.transform(df_full[feature_cols])
-            Y_targ = self.scaler_y.transform(df_full[target_cols])
-            X = np.concatenate([X_feat, Y_targ], axis=1)
-        else:
-            X = self.scaler_y.transform(df_full[target_cols])
-
+        # 4. Extract sliding window slice & convert to (1, c_in, n_past) shape expected by TS DataLoader / PyTorch model
         window = X[-n_past:]
         window = window.T[None, ...]
+        
+        # 5. Clip features using training set quantiles
         window = np.clip(
             window, self.clipping_min, self.clipping_max
         ).astype(np.float32)
+    
         return window
 
     def infer(self, window, device="cpu"):

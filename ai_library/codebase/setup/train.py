@@ -5,7 +5,7 @@ import yaml
 from ..models.iTransformer_class import iTransformer_pipeline
 from ..helpers.pivot_df import pivot_df
 from ..helpers.config_helper import validate_config
-
+import matplotlib.pyplot as plt
 
 def get_last_window_data_and_train():
     from . import read
@@ -42,6 +42,40 @@ def get_last_window_data_and_train():
     if parquet_train_size:
         df = df.tail(parquet_train_size)
     print(df.head())
+    # --- REPEAT DATAFRAME 100 TIMES WITH CONTINUOUS TIMESTAMPS ---
+    ###for debugging only!!!
+    '''
+    df = df.tail(100)  # Keep only the last 100 rows for testing
+    if not df.empty:
+        n_repeats = 1000
+        n_rows = len(df)
+        start_ts = df["ts"].min()
+        
+        # Calculate step size based on resample frequency or actual delta
+        freq_td = pd.to_timedelta(resample_frequency)
+        
+        # Repeat non-timestamp feature columns 100 times
+        feature_cols = [c for c in df.columns if c != "ts"]
+        df_repeated = pd.concat([df] * n_repeats, ignore_index=True)
+        
+        # Re-generate continuous timestamp sequence
+        df_repeated["ts"] = pd.date_range(
+            start=start_ts,
+            periods=n_rows * n_repeats,
+            freq=freq_td
+        )
+        
+        # Put 'ts' back as the first column
+        df = df_repeated[["ts"] + feature_cols]
+    plt.figure(figsize=(12, 6))
+    plt.plot(df["ts"], df[targets[0]], label=targets[0])
+    plt.title("Repeated DataFrame with Continuous Timestamps")
+    plt.xlabel("Timestamp")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.savefig("repeated_dataframe.png")
+    '''
+    # -------------------------------------------------------------
     #if len(df) < required_rows:
     #        raise ValueError(
     #            f"Not enough rows in parquet file: found {len(df)}, need at least {required_rows} (window + horizon + stride)/min(splits)"
