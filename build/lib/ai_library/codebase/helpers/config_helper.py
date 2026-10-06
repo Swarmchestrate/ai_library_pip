@@ -134,14 +134,14 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
             raise ValueError("parquet_train_size must be a positive integer or None")
 
     # Optional: verify model-specific sections are mappings if present
-    for model_key in ("gmlp", "xgb"):
+    for model_key in ("gmlp", "xgb", "itransformer"):
         if model_key in config and config[model_key] is not None and not isinstance(config[model_key], dict):
             raise ValueError(f"{model_key} section must be a mapping of parameters")
 
     # Validate common hyperparameters for supported model sections
     gmlp_params = config.get("gmlp", {}).get("model_params", {}) if isinstance(config.get("gmlp"), dict) else {}
     xgb_params = config.get("xgb", {}).get("model_params", {}) if isinstance(config.get("xgb"), dict) else {}
-
+    itransformer_params = config.get("itransformer", {}).get("model_params", {}) if isinstance(config.get("itransformer"), dict) else {}
     if gmlp_params:
         for key in ("d_model", "d_ffn", "depth", "patch_size", "epochs"):
             if key in gmlp_params and (not isinstance(gmlp_params[key], int) or gmlp_params[key] <= 0):
@@ -167,7 +167,20 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
             raise ValueError("xgb.model_params.random_state must be a non-negative integer")
         if "n_jobs" in xgb_params and (not isinstance(xgb_params["n_jobs"], int)):
             raise ValueError("xgb.model_params.n_jobs must be an integer")
-
+        
+    if itransformer_params:
+        # Validate positive integers (e.g., epochs, d_model, depth, etc.)
+        for key in ("epochs", "patience"):
+            if key in itransformer_params:
+                val = itransformer_params[key]
+                if not isinstance(val, int) or val <= 0:
+                    raise ValueError(f"itransformer.model_params.{key} must be a positive integer, got {val!r}")
+        
+        for key in ("lr"):
+            if key in itransformer_params:
+                val = itransformer_params[key]
+                if not isinstance(val, (int, float)) or val < 0:
+                    raise ValueError(f"itransformer.model_params.{key} must be a non-negative number, got {val!r}")
     print(f"Configuration file {p} validated successfully.")
     return config
 

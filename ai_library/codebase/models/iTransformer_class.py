@@ -96,7 +96,7 @@ class iTransformer_pipeline:
             raise ValueError("d_model must be divisible by n_heads")
         if not 0 <= dropout < 1:
             raise ValueError("dropout must be in [0, 1)")
-
+        
         self.model_config = {
             "d_model": d_model,
             "n_heads": n_heads,
@@ -193,6 +193,14 @@ class iTransformer_pipeline:
         return dls, dls[2]
 
     def train(self, dls, test_dl, lr=1e-3, epochs=10, patience=10):
+        package_root = Path(__file__).resolve().parent.parent.parent
+        with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
+                    config = yaml.safe_load(f)
+                    self.params = config.get("itransformer", {}).get("model_params", {})
+
+        epochs = self.params.get("epochs", epochs)
+        lr = self.params.get("lr", lr)
+        patience = self.params.get("patience", patience)
         if self.pred_len is None:
             raise RuntimeError("data was not preprocessed; run preprocess_splits first")
 
