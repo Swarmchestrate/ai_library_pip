@@ -1,6 +1,6 @@
 # Application Configuration
 pipeline_type: "xgb"
-window: 96
+window: 288
 horizon: 96
 stride: 96
 prediction_target: "cpu_util_instance"
@@ -18,9 +18,9 @@ gmlp:
     d_ffn: 128
     depth: 2
     patch_size: 1
-    epochs: 10
+    epochs: 1000
     lr: 0.001
-    patience: 10
+    patience: 200
 xgb:
   model_params:
     n_estimators: 100
