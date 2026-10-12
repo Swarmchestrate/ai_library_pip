@@ -44,6 +44,7 @@ def get_last_window_data_and_train():
     print(df.head())
     # --- REPEAT DATAFRAME 100 TIMES WITH CONTINUOUS TIMESTAMPS ---
     ###for debugging only!!!
+    '''
     df = df.tail(100)  # Keep only the last 100 rows for testing
     if not df.empty:
         n_repeats = 50#0
@@ -73,6 +74,7 @@ def get_last_window_data_and_train():
     plt.ylabel("Value")
     plt.legend()
     plt.savefig("repeated_dataframe.png")
+    '''
     # -------------------------------------------------------------
     #if len(df) < required_rows:
     #        raise ValueError(
