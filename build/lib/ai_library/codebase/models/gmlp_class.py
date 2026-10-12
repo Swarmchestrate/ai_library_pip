@@ -248,6 +248,6 @@ class gMLP_pipeline:
 
         preds = preds.cpu().numpy()[0].T  # Shape: (n_future, n_targets)
         preds = self.scaler_y.inverse_transform(preds)
-        preds = np.clip(preds, a_min=0, a_max=None)
+        #preds = np.clip(preds, a_min=0, a_max=None)
 
         return preds

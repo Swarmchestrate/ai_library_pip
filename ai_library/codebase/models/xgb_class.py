@@ -38,6 +38,10 @@ class XGBoost_pipeline:
         the resulting samples into train/val/test.
         """
 
+        if targets is None:
+            exclude_cols = list(exclude_columns or [])
+            targets = [c for c in df.columns if c not in exclude_columns]
+
         X, Y, scaler_x, scaler_y = apply_sliding_window(
             df,
             targets,
@@ -46,6 +50,8 @@ class XGBoost_pipeline:
             stride,
             exclude_columns,
         )
+        if Y.ndim == 2:
+            Y = Y[:, None, :]
 
         self.scaler_x = scaler_x
         self.scaler_y = scaler_y
@@ -56,8 +62,8 @@ class XGBoost_pipeline:
         val_end = int((splits[0] + splits[1]) * n_samples)
 
         x_train, y_train = X[:train_end], Y[:train_end]
-        self.clipping_min = np.quantile(x_train, 0.01, axis=0)
-        self.clipping_max = np.quantile(x_train, 0.99, axis=0)
+        self.clipping_min = np.quantile(x_train, 0.01, axis=(0, 2), keepdims=True)
+        self.clipping_max = np.quantile(x_train, 0.99, axis=(0, 2), keepdims=True)
 
         x_val, y_val = np.clip(X[train_end:val_end],self.clipping_min,self.clipping_max), Y[train_end:val_end]
         x_test, y_test = np.clip(X[val_end:],self.clipping_min,self.clipping_max), Y[val_end:]
@@ -69,31 +75,46 @@ class XGBoost_pipeline:
         return train_ds, val_ds, test_ds
     
     def train(self, train_ds, val_ds, test_ds):
+        x_train, y_train = train_ds
+        x_val, y_val = val_ds
+        x_test, y_test = test_ds
 
-        x_train = train_ds[0]
-        x_train = x_train.reshape(x_train.shape[0],-1)
+        # 1. Flatten 3D input features to 2D for XGBoost: (samples, channels, seq_len) -> (samples, channels * seq_len)
+        x_train = x_train.reshape(x_train.shape[0], -1)
+        x_val = x_val.reshape(x_val.shape[0], -1)
+        x_test = x_test.reshape(x_test.shape[0], -1)
 
-        y_train = train_ds[1].astype(np.float32)
-        y_train = y_train.reshape(y_train.shape[0],-1)
+        package_root = Path(__file__).resolve().parent.parent.parent
+        with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+            n_future = config.get("horizon")
 
-        x_val = val_ds[0]
-        x_val = x_val.reshape(x_val.shape[0],-1)
-
-        y_val = val_ds[1].astype(np.float32)
-        y_val = y_val.reshape(y_val.shape[0],-1)
-
-        x_test = test_ds[0]
-        x_test = x_test.reshape(x_test.shape[0],-1)
-        
-        y_test = test_ds[1].astype(np.float32)
-        y_test = y_test.reshape(y_test.shape[0],-1)
+        if y_train.ndim == 3:
+            n_samples, n_targets, n_future = y_train.shape
+            
+            # 1. Flatten for training model (bs, n_targets * n_future)
+            y_train_xgb = y_train.transpose(0, 2, 1).reshape(n_samples, -1).astype(np.float32)
+            y_val_xgb = y_val.transpose(0, 2, 1).reshape(y_val.shape[0], -1).astype(np.float32)
+            
+            # 2. Keep 2D flattened versions for inverse transformations and evaluation
+            y_test_flat = y_test.transpose(0, 2, 1).reshape(-1, n_targets)
+            y_val_flat = y_val.transpose(0, 2, 1).reshape(-1, n_targets)
+        else:
+            y_train_xgb = y_train.astype(np.float32)
+            y_val_xgb = y_val.astype(np.float32)
+            y_test_flat = y_test
+            y_val_flat = y_val
+            n_targets = y_train_xgb.shape[1] // n_future
 
         model = xgb.XGBRegressor(**self.params)
 
-        model.fit(x_train, y_train)
+        model.fit(x_train, y_train_xgb)
         preds = model.predict(x_test)
+        if preds.ndim == 2 and preds.shape[1] > n_targets:
+            preds = preds.reshape(-1, n_future, n_targets).transpose(0, 2, 1).reshape(-1, n_targets)
+        
         preds = self.scaler_y.inverse_transform(preds)
-        targets = self.scaler_y.inverse_transform((y_test))
+        targets = self.scaler_y.inverse_transform(y_test_flat)
         rmse = sqrt(mean_squared_error(preds, targets))
 
         self.model = model
@@ -103,23 +124,26 @@ class XGBoost_pipeline:
         atomic_save(self.clipping_min, f"{self.saved_files_dir}/clipping_min_xgb.pkl")
         atomic_save(self.clipping_max, f"{self.saved_files_dir}/clipping_max_xgb.pkl")
 
-        #conformal prediction intervals
-        val_preds = model.predict(x_val).reshape(-1, 1)
-        val_targets = y_val.reshape(-1, 1)
+        # conformal prediction intervals
+        val_preds = model.predict(x_val) # Note: x_val is already flattened in preprocess_splits
+        if val_preds.ndim == 2 and val_preds.shape[1] > n_targets:
+            val_preds = val_preds.reshape(-1, n_future, n_targets).transpose(0, 2, 1).reshape(-1, n_targets)
+            
         val_preds = self.scaler_y.inverse_transform(val_preds)
-        val_targets = self.scaler_y.inverse_transform(val_targets)
+        val_targets = self.scaler_y.inverse_transform(y_val_flat) 
         val_residuals = np.abs(val_targets - val_preds)
+        
         alpha = self.conformal_q_alpha
         n_val = len(val_residuals)
 
-        # 3. Finite-sample correction formula for Conformal Prediction
+        # Finite-sample correction formula for Conformal Prediction
         q_level = np.ceil((n_val + 1) * (1 - alpha)) / n_val
         q_level = min(q_level, 1.0)  # Safety cap at 1.0
 
-        # 4. Compute the quantile threshold
-        # axis=0 calculates a distinct margin for each future timestep in your horizon
+        # Compute the quantile threshold
         self.conformal_q = np.quantile(val_residuals, q_level, axis=0)
         atomic_save(self.conformal_q, f"{self.saved_files_dir}/conformal_q_xgb.pkl")
+        
         return model, rmse, self.conformal_q
 
 
@@ -147,13 +171,24 @@ class XGBoost_pipeline:
         return window
 
     def infer(self, window):
-
+        package_root = Path(__file__).resolve().parent.parent.parent
+        with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+            n_future = config.get("horizon")
+    
         if self.model is None:
             raise RuntimeError("model was not trained yet, please run the train method first.")
         
         # XGBoost predict directly on numpy array
-        preds = self.model.predict(window)
-        preds = preds.reshape(-1, 1)
-        preds = self.scaler_y.inverse_transform(preds)
+        preds_xgb = self.model.predict(window) # Shape: (1, n_targets * n_future)
+        
+        # Infer shapes from model output dimensions or config if available; here we deduce n_future and n_targets
+        c_out = preds_xgb.shape[1]
+        n_targets = c_out // n_future
+
+        preds_flat = preds_xgb.reshape(-1, n_future, n_targets).transpose(0, 2, 1).reshape(-1, n_targets)
+        preds = self.scaler_y.inverse_transform(preds_flat)
+        preds = preds.reshape(n_future, n_targets)
+        #preds = np.clip(preds, a_min=0, a_max=None)
 
         return preds
