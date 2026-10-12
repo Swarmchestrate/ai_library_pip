@@ -40,6 +40,7 @@ class gMLP_pipeline:
         with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
             self.params = config.get("gmlp", {}).get("model_params", {})
+            self.conformal_q_alpha = config.get("conf_q_alpha")
             self.saved_files_dir = os.path.expanduser(
                 config.get("saved_files_dir")
             )
@@ -174,7 +175,7 @@ class gMLP_pipeline:
 
         val_residuals = np.abs(val_targets_orig - val_preds_orig)
 
-        alpha = 0.05
+        alpha = self.conformal_q_alpha
         n_val = len(val_residuals)
 
         q_level = min(np.ceil((n_val + 1) * (1 - alpha)) / n_val, 1.0)

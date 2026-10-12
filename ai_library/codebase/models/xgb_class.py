@@ -18,6 +18,7 @@ class XGBoost_pipeline:
         package_root = Path(__file__).resolve().parent.parent.parent
         with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
+            self.conformal_q_alpha = config.get("conf_q_alpha")
             self.params = config.get("xgb", {}).get("model_params", {})
             self.saved_files_dir = os.path.expanduser(config.get("saved_files_dir"))
             os.makedirs(self.saved_files_dir, exist_ok=True)
@@ -108,7 +109,7 @@ class XGBoost_pipeline:
         val_preds = self.scaler_y.inverse_transform(val_preds)
         val_targets = self.scaler_y.inverse_transform(val_targets)
         val_residuals = np.abs(val_targets - val_preds)
-        alpha = 0.05  
+        alpha = self.conformal_q_alpha
         n_val = len(val_residuals)
 
         # 3. Finite-sample correction formula for Conformal Prediction

@@ -128,6 +128,12 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
     if not isinstance(config.get("flush_max_seconds"), (int, float)) or config.get("flush_max_seconds") <= 0:
         raise ValueError("flush_max_seconds must be a positive number")
 
+    conf_q_alpha = config.get("conf_q_alpha")
+    if conf_q_alpha is not None and (
+        not isinstance(conf_q_alpha, (int, float)) or not 0 < conf_q_alpha < 1
+    ):
+        raise ValueError("conf_q_alpha must be a number between 0 and 1")
+
     parquet_train_size = config.get("parquet_train_size")
     if parquet_train_size is not None:
         if not isinstance(parquet_train_size, int) or parquet_train_size <= 0:
