@@ -2,6 +2,12 @@
 
 `ai_library` is a Python package that exposes model training, inference, metrics recording, cron scheduling, and package-based configuration management.
 
+## Configuration
+
+See the [Configuration reference](docs/configuration.md) for descriptions
+of all configuration variables, expected values, defaults, and SAT
+integration recommendations.
+
 ## Package Overview
 
 ### Available Top-Level APIs
