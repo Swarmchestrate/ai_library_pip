@@ -140,6 +140,12 @@ class iTransformer_pipeline:
 
         target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
         exclude_columns = list(exclude_columns or [])
+
+        if targets is None:
+            excluded_set = set(exclude_columns + ([time_column] if time_column else []))
+            target_columns = [col for col in df.columns if col not in excluded_set]
+        else:
+            target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
         required = target_columns + exclude_columns + ([time_column] if time_column else [])
         missing = [column for column in required if column not in df.columns]
         if missing:
@@ -148,7 +154,7 @@ class iTransformer_pipeline:
         excluded = set(exclude_columns + target_columns + ([time_column] if time_column else []))
         feature_columns = [column for column in df.columns if column not in excluded]
         if not feature_columns:
-            raise ValueError("at least one non-target feature column is required")
+            feature_columns = target_columns
 
         if time_column:
             timestamps = pd.to_datetime(df[time_column], errors="raise")
