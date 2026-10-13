@@ -94,14 +94,12 @@ class XGBoost_pipeline:
             
             # 1. Flatten for training model (bs, n_targets * n_future)
             y_train_xgb = y_train.transpose(0, 2, 1).reshape(n_samples, -1).astype(np.float32)
-            y_val_xgb = y_val.transpose(0, 2, 1).reshape(y_val.shape[0], -1).astype(np.float32)
             
             # 2. Keep 2D flattened versions for inverse transformations and evaluation
             y_test_flat = y_test.transpose(0, 2, 1).reshape(-1, n_targets)
             y_val_flat = y_val.transpose(0, 2, 1).reshape(-1, n_targets)
         else:
             y_train_xgb = y_train.astype(np.float32)
-            y_val_xgb = y_val.astype(np.float32)
             y_test_flat = y_test
             y_val_flat = y_val
             n_targets = y_train_xgb.shape[1] // n_future
