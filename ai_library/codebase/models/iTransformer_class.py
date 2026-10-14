@@ -190,6 +190,15 @@ class iTransformer_pipeline:
         self.target_columns = target_columns
         self.feature_columns = feature_columns
         self.time_column = time_column
+        '''
+        atomic_save(self.pred_len, f"{self.saved_files_dir}/pred_len_itransformer.pkl")
+        atomic_save(self.n_past, f"{self.saved_files_dir}/n_past_itransformer.pkl")
+        atomic_save(self.n_targets, f"{self.saved_files_dir}/n_targets_itransformer.pkl")
+        '''
+        atomic_save(self.target_columns, f"{self.saved_files_dir}/target_columns_itransformer.pkl")
+        atomic_save(self.feature_columns, f"{self.saved_files_dir}/feature_columns_itransformer.pkl")
+        #atomic_save(self.time_column, f"{self.saved_files_dir}/time_column_itransformer.pkl")
+
 
         datasets = [
             _WindowDataset(data, marks, split_origins, n_past, n_future, self.n_targets)
@@ -264,7 +273,11 @@ class iTransformer_pipeline:
         if self.scaler_x is None:
             raise RuntimeError("data was not preprocessed; run preprocess_splits first")
 
-        target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
+        if targets is None:
+            target_columns = self.target_columns
+        else:
+            target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
+        
         if target_columns != self.target_columns:
             raise ValueError(f"targets must match training order: {self.target_columns}")
         if n_past != self.n_past:
@@ -278,10 +291,11 @@ class iTransformer_pipeline:
         if missing:
             raise ValueError(f"missing columns: {missing}")
 
-        excluded = set(exclude_columns + target_columns + ([self.time_column] if self.time_column else []))
-        feature_columns = [column for column in df.columns if column not in excluded]
-        if feature_columns != self.feature_columns:
-            raise ValueError(f"feature columns must match training order: {self.feature_columns}")
+        #excluded = set(exclude_columns + target_columns + ([self.time_column] if self.time_column else []))
+        feature_columns = self.feature_columns
+
+        #if feature_columns != self.feature_columns:
+        #    raise ValueError(f"feature columns must match training order: {self.feature_columns}")
 
         if self.time_column:
             timestamps = pd.to_datetime(df[self.time_column], errors="raise")

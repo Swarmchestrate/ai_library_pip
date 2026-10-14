@@ -52,11 +52,12 @@ def inference():
             weights_only=False)
         pipeline.scaler_x = pickle.load(open(os.path.join(saved_files_dir, "scaler_x_itransformer.pkl"), "rb"))
         pipeline.scaler_y = pickle.load(open(os.path.join(saved_files_dir, "scaler_y_itransformer.pkl"), "rb"))
-        target_cols = list(targets) if isinstance(targets, (list, tuple)) else [targets]
-        pipeline.target_columns = target_cols
+        pipeline.target_columns = pickle.load(open(os.path.join(saved_files_dir, "target_columns_itransformer.pkl"), "rb"))
         pipeline.n_past = window
-        pipeline.n_targets = len(target_cols)
+        pipeline.n_targets = len(pipeline.target_columns)
         pipeline.time_column = "ts"
+        pipeline.pred_len = config.get("horizon")
+        pipeline.feature_columns = pickle.load(open(os.path.join(saved_files_dir, "feature_columns_itransformer.pkl"), "rb"))
         pipeline.conformal_q = pickle.load(open(os.path.join(saved_files_dir, "conformal_q_itransformer.pkl"), "rb"))
     else:
         raise ValueError(f"Unsupported pipeline type: {pipeline_type}")
@@ -78,10 +79,6 @@ def inference():
     horizon = config.get("horizon")
     first_predicted = last_window.iloc[-1]["ts"] + pd.Timedelta(seconds=data_frequency.total_seconds())
     last_predicted = first_predicted + pd.Timedelta(seconds=data_frequency.total_seconds() * (horizon - 1))
-
-    if pipeline_type == "itransformer":
-        excluded = set(cols_to_drop + pipeline.target_columns + ([pipeline.time_column] if pipeline.time_column else []))
-        pipeline.feature_columns = [col for col in last_window.columns if col not in excluded]
 
     window_tensor = pipeline.preprocess_inference(
         last_window,
