@@ -211,6 +211,7 @@ class iTransformer_pipeline:
         package_root = Path(__file__).resolve().parent.parent.parent
         with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
                     config = yaml.safe_load(f)
+                    alpha = config.get("conf_q_alpha", 0.05)
                     self.params = config.get("itransformer", {}).get("model_params", {})
 
         epochs = self.params.get("epochs", epochs)
@@ -247,7 +248,6 @@ class iTransformer_pipeline:
 
         #perform conformal prediction interval calculation
         val_residuals = np.abs(preds_val - targets_val)
-        alpha = 0.05  
         n_val = len(val_residuals)
 
         # 3. Finite-sample correction formula for Conformal Prediction
@@ -335,8 +335,12 @@ class iTransformer_pipeline:
             preds = model(window, marks)
 
         preds = self._targets_2d(preds.cpu().numpy())
-        return self.scaler_y.inverse_transform(preds)
-
+        preds = self.scaler_y.inverse_transform(preds)
+        result_dict = {}
+        for i, col in enumerate(self.target_columns):
+            result_dict[col] = preds[:, i]        
+        return result_dict
+    
     def _targets_2d(self, values):
         values = np.asarray(values)
         if self.n_targets == 1:

@@ -34,6 +34,7 @@ def inference():
         pipeline.clipping_min = pickle.load(open(os.path.join(saved_files_dir, "clipping_min_gmlp.pkl"), "rb"))
         pipeline.clipping_max = pickle.load(open(os.path.join(saved_files_dir, "clipping_max_gmlp.pkl"), "rb"))
         pipeline.conformal_q = pickle.load(open(os.path.join(saved_files_dir, "conformal_q_gmlp.pkl"), "rb"))
+        pipeline.target_names = pickle.load(open(os.path.join(saved_files_dir, "target_names_gmlp.pkl"), "rb"))
     elif pipeline_type == "xgb":
         pipeline = XGBoost_pipeline()
         print("loading xgboost model from", os.path.join(saved_files_dir, "trained_model_xgb.pkl"))
@@ -43,6 +44,7 @@ def inference():
         pipeline.clipping_min = pickle.load(open(os.path.join(saved_files_dir, "clipping_min_xgb.pkl"), "rb"))
         pipeline.clipping_max = pickle.load(open(os.path.join(saved_files_dir, "clipping_max_xgb.pkl"), "rb"))
         pipeline.conformal_q = pickle.load(open(os.path.join(saved_files_dir, "conformal_q_xgb.pkl"), "rb"))
+        pipeline.target_names = pickle.load(open(os.path.join(saved_files_dir, "target_names_xgb.pkl"), "rb"))
     elif pipeline_type == "itransformer":
         pipeline = iTransformer_pipeline()
         print("loading iTransformer model from", os.path.join(saved_files_dir, "trained_model_itransformer.pth"))

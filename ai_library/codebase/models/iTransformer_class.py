@@ -335,8 +335,12 @@ class iTransformer_pipeline:
             preds = model(window, marks)
 
         preds = self._targets_2d(preds.cpu().numpy())
-        return self.scaler_y.inverse_transform(preds)
-
+        preds = self.scaler_y.inverse_transform(preds)
+        result_dict = {}
+        for i, col in enumerate(self.target_columns):
+            result_dict[col] = preds[:, i]        
+        return result_dict
+    
     def _targets_2d(self, values):
         values = np.asarray(values)
         if self.n_targets == 1:

@@ -41,6 +41,8 @@ class XGBoost_pipeline:
         if targets is None:
             exclude_cols = list(exclude_columns or [])
             targets = [c for c in df.columns if c not in exclude_columns]
+        self.target_names = targets
+        atomic_save(self.target_names, f"{self.saved_files_dir}/target_names_xgb.pkl")
 
         X, Y, scaler_x, scaler_y = apply_sliding_window(
             df,
@@ -188,5 +190,11 @@ class XGBoost_pipeline:
         preds = self.scaler_y.inverse_transform(preds_flat)
         preds = preds.reshape(n_future, n_targets)
         #preds = np.clip(preds, a_min=0, a_max=None)
-
-        return preds
+        if not self.target_names:
+            raise RuntimeError(
+                "target_names not set, please train the model first."
+            )
+        preds_dict = {
+                    metric: preds[:, i] for i, metric in enumerate(self.target_names)
+                }
+        return preds_dict

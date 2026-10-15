@@ -61,6 +61,8 @@ class gMLP_pipeline:
             exclude_cols = list(exclude_columns or [])
             targets = [c for c in df.columns if c not in exclude_cols]
 
+        self.target_names = targets
+
         X, Y, scaler_x, scaler_y = apply_sliding_window(
             df,
             targets,
@@ -203,6 +205,9 @@ class gMLP_pipeline:
         atomic_save(
             self.conformal_q, f"{self.saved_files_dir}/conformal_q_gmlp.pkl"
         )
+        atomic_save(
+            self.target_names, f"{self.saved_files_dir}/target_names_gmlp.pkl"
+        )
 
         return model, rmse_test, self.conformal_q
 
@@ -239,7 +244,10 @@ class gMLP_pipeline:
             raise RuntimeError(
                 "model was not trained yet, please run the train method first."
             )
-
+        if not self.target_names:
+            raise RuntimeError(
+                "target_names not set, please train the model first."
+            )
         model = self.model.to(device)
         model.eval()
 
@@ -248,6 +256,9 @@ class gMLP_pipeline:
 
         preds = preds.cpu().numpy()[0].T  # Shape: (n_future, n_targets)
         preds = self.scaler_y.inverse_transform(preds)
+        preds_dict = {
+            metric: preds[:, i] for i, metric in enumerate(self.target_names)
+        }
         #preds = np.clip(preds, a_min=0, a_max=None)
 
-        return preds
+        return preds_dict
