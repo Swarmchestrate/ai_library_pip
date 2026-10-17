@@ -22,11 +22,11 @@ Requires-Dist: preshed==3.0.13
 Requires-Dist: pyarrow==24.0.0
 Requires-Dist: pydantic_core==2.46.4
 Requires-Dist: PyYAML==6.0.3
-Requires-Dist: requests==2.34.2
+Requires-Dist: requests>=2.33.0
 Requires-Dist: requests-oauthlib==2.0.0
 Requires-Dist: scikit-learn==1.7.2
 Requires-Dist: setuptools==81.0.0
-Requires-Dist: swchmonclient==0.2.0
+Requires-Dist: swchmonclient>=0.2.0
 Requires-Dist: threadpoolctl==3.6.0
 Requires-Dist: torch==2.12.0
 Requires-Dist: torchaudio==2.11.0

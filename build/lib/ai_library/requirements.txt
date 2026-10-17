@@ -23,11 +23,11 @@ preshed==3.0.13
 pyarrow==24.0.0
 pydantic_core==2.46.4
 PyYAML==6.0.3
-requests==2.34.2
+requests>=2.33.0
 requests-oauthlib==2.0.0
 scikit-learn==1.7.2
 setuptools==81.0.0
-swchmonclient==0.2.0
+swchmonclient>=0.2.0
 threadpoolctl==3.6.0
 torch==2.12.0
 torchaudio==2.11.0
