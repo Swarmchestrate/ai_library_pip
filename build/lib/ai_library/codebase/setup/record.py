@@ -175,10 +175,7 @@ def _poll_standard(metric: str) -> list[dict[str, Any]]:
     poll_time = time.time()
     try:
         values = query_metric_values(metric)
-        # --- ADD THIS TEMPORARY DEBUG BLOCK ---
-        if metric == "mean_cpu_util_prct":
-            logger.info("DEBUG: Polled mean_cpu_util_prct directly. Received array: %s", values)
-        # --------------------------------------
+        logger.info("DEBUG: Polled %s directly. Received array: %s", metric, values)
     except Exception:
         logger.exception("Failed to query standard metric %s", metric)
         return []
