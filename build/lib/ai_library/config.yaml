@@ -5,10 +5,16 @@ horizon: 96
 stride: 96
 prediction_target: "cpu_util_instance"
 STANDARD_METRICS:
-  - "cpu_util_instance"
   - "mean_cpu_util_prct"
   - "cpu_slo_upper"
   - "cpu_slo_lower"
+  - "cpu_util_instance"
+  - "cpu_idle_instance"
+  - "ram_free_instance"
+  - "ram_total_instance"
+  - "disk_read_activity"
+  - "disk_write_activity"
+RAW_METRICS: {}
 cols_to_drop: ["ts"]
 splits:
   [0.7, 0.1, 0.2]

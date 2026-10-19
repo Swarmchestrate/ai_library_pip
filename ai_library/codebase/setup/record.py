@@ -40,14 +40,12 @@ with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
     DEFAULT_FLUSH_MAX_SECONDS = config["flush_max_seconds"]
 
 #get these from config.yaml instead of hardcoding them here!!
-STANDARD_METRICS = config["STANDARD_METRICS"]
+STANDARD_METRICS = config.get("STANDARD_METRICS", [])
 
 # Raw mode: direct connections to node IPs; samples keep real timestamps.
 # Selector per metric: explicit IP list (simplest outside Kubernetes),
 # "all", or "local" (both require in-cluster K8s API access).
-RAW_METRICS: dict[str, list[str] | str] = {
-    # "cpu_util_instance": ["100.104.109.71", "100.118.84.34"],
-}
+RAW_METRICS = config.get("RAW_METRICS", {})
 
 logger = logging.getLogger("recorder")
 

@@ -56,6 +56,7 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
         "data_frequency",
         "retrain_frequency",
         "STANDARD_METRICS",
+        "RAW_METRICS",
         "data_dir",
         "saved_files_dir",
         "poll_interval_seconds",
@@ -108,6 +109,18 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
 
     if not isinstance(config.get("STANDARD_METRICS"), list):
         raise ValueError("STANDARD_METRICS must be a list of metric names")
+
+    raw_metrics = config.get("RAW_METRICS")
+    if raw_metrics is not None:
+        if not isinstance(raw_metrics, dict):
+            raise ValueError("RAW_METRICS must be a dictionary mapping metric names to node selectors")
+        for metric, selector in raw_metrics.items():
+            if not isinstance(metric, str):
+                raise ValueError(f"RAW_METRICS keys must be strings, got {metric!r}")
+            if not isinstance(selector, (str, list, tuple)):
+                raise ValueError(f"RAW_METRICS selector for '{metric}' must be a string or list of strings")
+            if isinstance(selector, (list, tuple)) and not all(isinstance(ip, str) for ip in selector):
+                raise ValueError(f"All node selectors in RAW_METRICS['{metric}'] must be strings")
 
     for key in ("data_frequency", "retrain_frequency"):
         value = config.get(key)
