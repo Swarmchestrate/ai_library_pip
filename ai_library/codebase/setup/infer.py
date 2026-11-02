@@ -11,9 +11,9 @@ from ..models.gmlp_class import gMLP_pipeline
 from ..models.xgb_class import XGBoost_pipeline
 from ..helpers.pivot_df import pivot_df
 from ..helpers.config_helper import validate_config
+from ..setup.simulate_inputs import preprocess as preprocess_from_query
 
 def inference():
-    from . import read
     config = validate_config()
     saved_files_dir = os.path.expanduser(config.get("saved_files_dir"))
     os.makedirs(saved_files_dir, exist_ok=True)
@@ -64,8 +64,7 @@ def inference():
     else:
         raise ValueError(f"Unsupported pipeline type: {pipeline_type}")
     data_frequency = pd.to_timedelta(config.get("data_frequency"))
-    df = pd.read_parquet(config["parquet_path"])
-    max_ts = df["ts"].max().floor(data_frequency)
+    df = preprocess_from_query(['node1', 'node2', 'node3'], ['metric1', 'metric2', 'metric3'], ['metric4', 'metric5'], 500, "infer")
     pivot_df_bool = config.get("pivot_df")
     if pivot_df_bool:
         df = pivot_df(df)
