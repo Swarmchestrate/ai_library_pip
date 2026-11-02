@@ -2,11 +2,22 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-def query_metric_values_raw(node_id, metric_names,seconds, mode):
+def get_timestamps(seconds, mode):
+    now = pd.Timestamp.now().floor('s')
+    if mode == "train":
+        return pd.date_range(end=now, periods=seconds, freq='15s')
+    elif mode == "infer":
+        return pd.date_range(start=now, periods=seconds, freq='15s')
+    else:
+        raise ValueError(f"Unsupported mode: {mode}. Use 'train' or 'infer'.")
+
+def query_metric_values_raw(node_id, metric_names, seconds, mode):
+    ts = get_timestamps(seconds, mode)
     dictlist = []
     for node in node_id:
         for metric in metric_names:
-            y, ts = synthesize_metric_values(seconds, mode)
+            x = np.linspace(0, 35 * np.pi, seconds)
+            y = np.sin(x)
             dictlist.append({
                 "node": node,
                 "metric": metric,
@@ -15,10 +26,12 @@ def query_metric_values_raw(node_id, metric_names,seconds, mode):
             })
     return dictlist
 
-def query_metric_values_composite(metric_names,seconds, mode):
+def query_metric_values_composite(metric_names, seconds, mode):
+    ts = get_timestamps(seconds, mode)
     dictlist = []
     for metric in metric_names:
-        y, ts = synthesize_metric_values(seconds, mode)
+        x = np.linspace(0, 35 * np.pi, seconds)
+        y = np.sin(x)
         dictlist.append({
             "timestamps": ts,
             "metric": metric,
@@ -27,15 +40,11 @@ def query_metric_values_composite(metric_names,seconds, mode):
     return dictlist
 
 def synthesize_metric_values(seconds, mode):
-    if mode == "train":
-        timestamps = pd.date_range(end=pd.Timestamp.now(), periods=seconds, freq='15s')
-    elif mode == "infer":
-        timestamps = pd.date_range(start=pd.Timestamp.now(), periods=seconds, freq='15s')
-    else:
-        raise ValueError(f"Unsupported mode: {mode}. Use 'train' or 'infer'.")
+    # Kept for backward compatibility if called elsewhere
+    ts = get_timestamps(seconds, mode)
     x = np.linspace(0, 35 * np.pi, seconds)
     y = np.sin(x)
-    return timestamps, y
+    return y, ts
 
 def preprocess(node_ids, raw_metrics, composite_metrics, seconds, mode):
     raw_data = query_metric_values_raw(node_ids, raw_metrics, seconds, mode)
@@ -49,9 +58,11 @@ def preprocess(node_ids, raw_metrics, composite_metrics, seconds, mode):
     for item in composite_data:
         col_name = f"{item['metric']}_composite"
         series_dict[col_name] = pd.Series(item['values'], index=pd.to_datetime(item['timestamps']))
-    
     df = pd.DataFrame(series_dict)
-    df.index.name = 'ts'
+    # Extract useful numeric components from the timestamp
+    df['hour'] = df.index.hour
+    df['day_of_week'] = df.index.dayofweek
+    df['minute'] = df.index.minute
     df['ts'] = df.index
     return df
 
@@ -60,7 +71,6 @@ if __name__ == "__main__":
     raw_metrics = ['metric1', 'metric2', 'metric3']
     composite_metrics = ['metric4', 'metric5']
     seconds = 10
-    
     df = preprocess(node_ids, raw_metrics, composite_metrics, seconds, "train")
     print(df.head())
 

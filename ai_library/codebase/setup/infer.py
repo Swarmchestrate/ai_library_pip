@@ -64,10 +64,10 @@ def inference():
     else:
         raise ValueError(f"Unsupported pipeline type: {pipeline_type}")
     data_frequency = pd.to_timedelta(config.get("data_frequency"))
-    df = preprocess_from_query(['node1', 'node2', 'node3'], ['metric1', 'metric2', 'metric3'], ['metric4', 'metric5'], 500, "infer")
-    pivot_df_bool = config.get("pivot_df")
-    if pivot_df_bool:
-        df = pivot_df(df)
+    df = preprocess_from_query(['node1', 'node2', 'node3'], ['metric1', 'metric2', 'metric3'], ['metric4', 'metric5'], 1000, "infer")
+    #pivot_df_bool = config.get("pivot_df")
+    #if pivot_df_bool:
+    #    df = pivot_df(df)
     if "ts" not in df.columns and df.index.name == "ts":
         df = df.reset_index()
     elif "ts" not in df.columns:

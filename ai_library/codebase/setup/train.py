@@ -27,8 +27,8 @@ def get_last_window_data_and_train():
     elif pipeline_type == "itransformer":
         pipeline = iTransformer_pipeline()
     df = preprocess_from_query(['node1', 'node2', 'node3'], ['metric1', 'metric2', 'metric3'], ['metric4', 'metric5'], 10000, "train")
-    if config.get("pivot_df"):
-        df = pivot_df(df, index_col="ts", columns_col="metric", values_col="value")
+    #if config.get("pivot_df"):
+    #    df = pivot_df(df)
 
     # Basic safety checks: parquet should contain time column and enough rows
     if df.empty:

@@ -182,7 +182,7 @@ def _poll_standard(metric: str) -> list[dict[str, Any]]:
 def _poll_raw(metric: str, window_seconds: int) -> list[dict[str, Any]]:
     try:
         values_by_node = query_metric_values_raw(metric, window_seconds)
-        logger.info("DEBUG: Polled raw metric%s directly. Received array: %s", metric, values_by_node)
+        logger.info("DEBUG: Polled raw metric %s directly. Received array: %s", metric, values_by_node)
 
     except Exception:
         logger.exception("Failed to query raw metric %s", metric)

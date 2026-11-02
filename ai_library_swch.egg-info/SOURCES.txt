@@ -18,6 +18,7 @@ ai_library/codebase/setup/cron_manager.py
 ai_library/codebase/setup/infer.py
 ai_library/codebase/setup/read.py
 ai_library/codebase/setup/record.py
+ai_library/codebase/setup/simulate_inputs.py
 ai_library/codebase/setup/train.py
 ai_library_swch.egg-info/PKG-INFO
 ai_library_swch.egg-info/SOURCES.txt
