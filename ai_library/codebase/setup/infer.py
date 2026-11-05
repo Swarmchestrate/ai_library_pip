@@ -13,7 +13,6 @@ from ..helpers.pivot_df import pivot_df
 from ..helpers.config_helper import validate_config
 
 def inference():
-    from . import read
     config = validate_config()
     saved_files_dir = os.path.expanduser(config.get("saved_files_dir"))
     os.makedirs(saved_files_dir, exist_ok=True)
@@ -75,7 +74,7 @@ def inference():
         raise KeyError(f"Column 'ts' missing from data after pivoting. Available columns: {list(df.columns)}")
 
     # Forward fill trailing values (so the newest polled metrics extend to the latest timestamp)
-    df = df.set_index("ts").resample(resample_frequency).mean(numeric_only=True).interpolate("linear").bfill().ffill().reset_index()
+    df = df.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
     print(df.head())
     last_window = df.iloc[-window:]
     horizon = config.get("horizon")

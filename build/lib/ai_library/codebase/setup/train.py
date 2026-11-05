@@ -8,7 +8,6 @@ from ..helpers.config_helper import validate_config
 import matplotlib.pyplot as plt
 
 def get_last_window_data_and_train():
-    from . import read
     config = validate_config()
     train_window = config["window"]
     train_horizon = config["horizon"]
@@ -38,7 +37,7 @@ def get_last_window_data_and_train():
     if pivot_df_bool:
         df = pivot_df(df)
     print(df.head())
-    df = df.set_index("ts").resample(resample_frequency).mean(numeric_only=True).interpolate("linear").bfill().ffill().reset_index()
+    df = df.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
     if parquet_train_size:
         df = df.tail(parquet_train_size)
     print(df.head())

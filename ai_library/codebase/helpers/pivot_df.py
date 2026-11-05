@@ -4,18 +4,15 @@ def pivot_df(df):
     package_root = Path(__file__).resolve().parent.parent.parent
     with (package_root / "config.yaml").open("r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-        data_frequency = config.get("data_frequency")  # Default to 1 minute if not specified
+        data_frequency = config.get("data_frequency")  # Default fallback if not specified
+    df = df.copy()
+    df["feature"] = df["metric_name"] + "_" + df["node_ip"].astype(str)
     df_indexed = df.set_index("ts")
-    resampled = df_indexed.groupby("metric")["value"].resample(data_frequency).mean()
-    resampled_df = resampled.reset_index()
-    pivoted_df = resampled_df.pivot(index="ts", columns="metric", values="value")
+    resampled = df_indexed.groupby("feature")["metric_value"].resample(data_frequency).mean(numeric_only=True)
+    pivoted_df = resampled.unstack(level="feature")
     pivoted_df = pivoted_df.reset_index()
-    
-    # Clear the 'metric' axis label so pandas doesn't get confused
-    pivoted_df.columns.name = None 
-    plot_complete_timesteps(pivoted_df)
+    pivoted_df.columns.name = None
     return pivoted_df
-
 import matplotlib.pyplot as plt
 
 def plot_complete_timesteps(pivoted_df):

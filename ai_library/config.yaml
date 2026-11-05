@@ -3,18 +3,7 @@ pipeline_type: "xgb"
 window: 288
 horizon: 96
 stride: 96
-prediction_target: "cpu_util_instance"
-STANDARD_METRICS:
-  - "mean_cpu_util_prct"
-  - "cpu_slo_upper"
-  - "cpu_slo_lower"
-  - "cpu_util_instance"
-  - "cpu_idle_instance"
-  - "ram_free_instance"
-  - "ram_total_instance"
-  - "disk_read_activity"
-  - "disk_write_activity"
-RAW_METRICS: {}
+prediction_target: null
 cols_to_drop: ["ts"]
 splits:
   [0.7, 0.1, 0.2]
@@ -51,13 +40,9 @@ itransformer:
 retrain_frequency: "30m"
 data_frequency: "30s"
 #parquet_path: "data/orchestrator_data/data.parquet"
-parquet_path: "~/.local/share/ai_library/data.parquet"
+parquet_path: "~/.local/share/ai_library/data_synth.parquet"
 #data_dir: "data/orchestrator_data/collector"
-data_dir: "~/.local/share/ai_library/collector"
-saved_files_dir: "~/.local/share/ai_library/saved_models"
-poll_interval_seconds: 5.0
-flush_max_rows: 5000
-flush_max_seconds: 60.0
+saved_files_dir: "~/.local/share/ai_library/saved_models_synth"
 parquet_train_size: 100000
 pivot_df: true
 conf_q_alpha: 0.05

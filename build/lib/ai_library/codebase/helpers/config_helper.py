@@ -55,13 +55,7 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
         "parquet_path",
         "data_frequency",
         "retrain_frequency",
-        "STANDARD_METRICS",
-        "RAW_METRICS",
-        "data_dir",
         "saved_files_dir",
-        "poll_interval_seconds",
-        "flush_max_rows",
-        "flush_max_seconds",
     ]
     
     # 1. Verify all required keys are present in config dict
@@ -107,39 +101,15 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
     if not isinstance(config["cols_to_drop"], list):
         raise ValueError("cols_to_drop must be a list")
 
-    if not isinstance(config.get("STANDARD_METRICS"), list):
-        raise ValueError("STANDARD_METRICS must be a list of metric names")
-
-    raw_metrics = config.get("RAW_METRICS")
-    if raw_metrics is not None:
-        if not isinstance(raw_metrics, dict):
-            raise ValueError("RAW_METRICS must be a dictionary mapping metric names to node selectors")
-        for metric, selector in raw_metrics.items():
-            if not isinstance(metric, str):
-                raise ValueError(f"RAW_METRICS keys must be strings, got {metric!r}")
-            if not isinstance(selector, (str, list, tuple)):
-                raise ValueError(f"RAW_METRICS selector for '{metric}' must be a string or list of strings")
-            if isinstance(selector, (list, tuple)) and not all(isinstance(ip, str) for ip in selector):
-                raise ValueError(f"All node selectors in RAW_METRICS['{metric}'] must be strings")
-
     for key in ("data_frequency", "retrain_frequency"):
         value = config.get(key)
         if not isinstance(value, str) or not re.fullmatch(r"\d+[sm]", value):
             raise ValueError(f"{key} must be a string like '30s' or '5m', got {value!r}")
 
     # data_dir and saved_files_dir should be non-empty strings
-    for dir_key in ("data_dir", "saved_files_dir", "parquet_path"):
+    for dir_key in ("saved_files_dir", "parquet_path"):
         if not isinstance(config.get(dir_key), str) or not config.get(dir_key).strip():
             raise ValueError(f"{dir_key} must be a non-empty string path")
-
-    if not isinstance(config.get("poll_interval_seconds"), (int, float)) or config.get("poll_interval_seconds") <= 0:
-        raise ValueError("poll_interval_seconds must be a positive number")
-
-    if not isinstance(config.get("flush_max_rows"), int) or config.get("flush_max_rows") <= 0:
-        raise ValueError("flush_max_rows must be a positive integer")
-
-    if not isinstance(config.get("flush_max_seconds"), (int, float)) or config.get("flush_max_seconds") <= 0:
-        raise ValueError("flush_max_seconds must be a positive number")
 
     conf_q_alpha = config.get("conf_q_alpha")
     if conf_q_alpha is not None and (
@@ -200,7 +170,7 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
                 val = itransformer_params[key]
                 if not isinstance(val, (int, float)) or val < 0:
                     raise ValueError(f"itransformer.model_params.{key} must be a non-negative number, got {val!r}")
-    print(f"Configuration file {p} validated successfully.")
+    #print(f"Configuration file {p} validated successfully.")
     return config
 
 def _update_nested_key(config_dict: dict, key_path: str, new_value: Any) -> None:

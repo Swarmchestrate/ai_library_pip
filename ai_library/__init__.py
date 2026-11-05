@@ -1,4 +1,4 @@
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 import importlib
 from types import ModuleType
@@ -13,7 +13,7 @@ _LAZY_MAP = {
 	"remove_from_cron": (".codebase.setup.cron_manager", "remove_from_cron"),
 	"train": (".codebase.setup.train", "get_last_window_data_and_train"),
 	"infer": (".codebase.setup.infer", "inference"),
-	"record": (".codebase.setup.record", None),
+	"injest": (".codebase.setup.injest", "injest_metrics"),
 }
 
 
