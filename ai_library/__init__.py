@@ -13,7 +13,7 @@ _LAZY_MAP = {
 	"remove_from_cron": (".codebase.setup.cron_manager", "remove_from_cron"),
 	"train": (".codebase.setup.train", "get_last_window_data_and_train"),
 	"infer": (".codebase.setup.infer", "inference"),
-	"injest": (".codebase.setup.injest", "injest_metrics"),
+	"ingest": (".codebase.setup.ingest", "ingest_metrics"),
 }
 
 

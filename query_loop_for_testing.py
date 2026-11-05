@@ -1,5 +1,5 @@
 import random
-from ai_library import injest
+from ai_library import ingest
 
 def generate_comp_data(num_points=5, start_timestamp=1716712345.12, interval=15.0):
     """
@@ -96,8 +96,8 @@ for i in range(500):
     )
     
     # Ingest metrics
-    injest("cpu_usage", raw_data, mode="raw")
-    injest("cpu_usage", comp_data, mode="composite")
+    ingest("cpu_usage", raw_data, mode="raw")
+    ingest("cpu_usage", comp_data, mode="composite")
     
     # Update start timestamp for the next batch cleanly
     start_timestamp = raw_data[ips[0]][-1]["timestamp"] + 15.0

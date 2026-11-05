@@ -16,7 +16,7 @@ ai_library/codebase/models/itransformer_model.py
 ai_library/codebase/models/xgb_class.py
 ai_library/codebase/setup/cron_manager.py
 ai_library/codebase/setup/infer.py
-ai_library/codebase/setup/injest.py
+ai_library/codebase/setup/ingest.py
 ai_library/codebase/setup/train.py
 ai_library_swch.egg-info/PKG-INFO
 ai_library_swch.egg-info/SOURCES.txt
