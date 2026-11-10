@@ -16,13 +16,13 @@ def generate_synchronized_data(ip_addresses, num_points=5, start_timestamp=17167
     for idx, ip in enumerate(ip_addresses):
         phase_shift = idx * 10.0
         raw_data[ip] = [
-            {"timestamp": ts, "value": get_sine_value(ts + phase_shift, period=120.0, amplitude=40.0, offset=50.0)}
+            {"timestamp": ts, "value": get_sine_value(ts + phase_shift, period=1800, amplitude=40.0, offset=50.0)}
             for ts in timestamps
         ]
         
     # Generate composite data synchronized to the same timestamps
     comp_data = [
-        {"timestamp": ts, "value": get_sine_value(ts, period=120.0, amplitude=25.0, offset=75.0)}
+        {"timestamp": ts, "value": get_sine_value(ts, period=1800, amplitude=25.0, offset=75.0)}
         for ts in timestamps
     ]
     
