@@ -43,7 +43,6 @@ for i in range(1000):
         start_timestamp=start_timestamp, 
         interval=15.0
     )
-    print(raw_data, comp_data)
     # Ingest metrics
     ingest("cpu_usage", raw_data, mode="raw")
     ingest("cpu_usage", comp_data, mode="composite")
