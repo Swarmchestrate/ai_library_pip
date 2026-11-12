@@ -33,12 +33,13 @@ integration recommendations.
   - returns predictions, first_predicted, last_predicted, data_frequency, conformal_q 
   - conformal_q is the safety margin in order to be 1-alpha accurate for the predicted time window
 
-- `ai_library.record`
-  - Use `ai_library.record.main()` or run the module directly to start metric collection.
-
 - `ai_library.add_to_cron()` / `ai_library.remove_from_cron()`
   - Manage cron scheduling for recurring training runs.
   - Adds or removes a cron job that runs `python3 -m ai_library.codebase.setup.train`.
+
+
+- `ai_library.ingest()`
+  - Ingest query data into the dateframe path which is defined in config
 
 ## How to Use
 
@@ -54,6 +55,12 @@ This is an example of how config can be printed and updated.
 from ai_library import validate_config, update_config, show_config
 
 update_config(None, updates=["parquet_train_size", 100000])
+update_config(None, {
+    "gmlp.model_params.epochs": 500,        
+    "itransformer.model_params.epochs": 500,
+    "xgb.model_params.n_estimators": 700,
+    "xgb.model_params.max_depth": 10
+})
 show_config()
 validate_config()
 ```
