@@ -208,6 +208,7 @@ final_df.reset_index(inplace=True)
 final_df.to_parquet("all_models_predictions_combined.parquet", index=False)
 print(final_df.head())
 
+# or automated training using cron tab
 from ai_library import add_to_cron,remove_from_cron
 
 add_to_cron() #add train to cron with retrain_frequency frequency
