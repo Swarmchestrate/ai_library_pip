@@ -65,9 +65,7 @@ def inference():
     data_frequency = pd.to_timedelta(config.get("data_frequency"))
     df = pd.read_parquet(config["parquet_path"])
     max_ts = df["ts"].max().floor(data_frequency)
-    pivot_df_bool = config.get("pivot_df")
-    if pivot_df_bool:
-        df = pivot_df(df)
+    df = pivot_df(df)
     if "ts" not in df.columns and df.index.name == "ts":
         df = df.reset_index()
     elif "ts" not in df.columns:
