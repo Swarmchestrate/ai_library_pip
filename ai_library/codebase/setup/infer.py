@@ -23,7 +23,7 @@ def inference():
     resample_frequency = config.get("data_frequency")
     if pipeline_type == "gmlp":
         pipeline = gMLP_pipeline()
-        print("loading gMLP model from", os.path.join(saved_files_dir, "trained_model_gmlp.pth"))
+        #print("loading gMLP model from", os.path.join(saved_files_dir, "trained_model_gmlp.pth"))
         pipeline.model = torch.load(
             os.path.join(saved_files_dir, "trained_model_gmlp.pth"), 
             map_location="cpu", 
@@ -36,7 +36,7 @@ def inference():
         pipeline.target_names = pickle.load(open(os.path.join(saved_files_dir, "target_names_gmlp.pkl"), "rb"))
     elif pipeline_type == "xgb":
         pipeline = XGBoost_pipeline()
-        print("loading xgboost model from", os.path.join(saved_files_dir, "trained_model_xgb.pkl"))
+        #print("loading xgboost model from", os.path.join(saved_files_dir, "trained_model_xgb.pkl"))
         pipeline.model = pickle.load(open(os.path.join(saved_files_dir, "trained_model_xgb.pkl"), "rb"))
         pipeline.scaler_x = pickle.load(open(os.path.join(saved_files_dir, "scaler_x_xgb.pkl"), "rb"))
         pipeline.scaler_y = pickle.load(open(os.path.join(saved_files_dir, "scaler_y_xgb.pkl"), "rb"))
@@ -46,7 +46,7 @@ def inference():
         pipeline.target_names = pickle.load(open(os.path.join(saved_files_dir, "target_names_xgb.pkl"), "rb"))
     elif pipeline_type == "itransformer":
         pipeline = iTransformer_pipeline()
-        print("loading iTransformer model from", os.path.join(saved_files_dir, "trained_model_itransformer.pth"))
+        #print("loading iTransformer model from", os.path.join(saved_files_dir, "trained_model_itransformer.pth"))
         pipeline.model = torch.load(
             os.path.join(saved_files_dir, "trained_model_itransformer.pth"), 
             map_location="cpu", 
@@ -73,7 +73,6 @@ def inference():
 
     # Forward fill trailing values (so the newest polled metrics extend to the latest timestamp)
     df = df.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
-    print(df.head())
     last_window = df.iloc[-window:]
     horizon = config.get("horizon")
     first_predicted = last_window.iloc[-1]["ts"] + pd.Timedelta(seconds=data_frequency.total_seconds())
@@ -87,8 +86,20 @@ def inference():
     )
 
     predictions = pipeline.infer(window_tensor)
-    #print(f"Predictions from {pipeline_type} model: {predictions}")
-    #print(f"First predicted timestamp: {first_predicted}")
-    #print(f"Last predicted timestamp: {last_predicted}")
-    #print(f"Data frequency: {data_frequency}")
-    return predictions, first_predicted, last_predicted, data_frequency, pipeline.conformal_q
+    output_dict = {}
+
+    for (key, values), conformal_q in zip(predictions.items(), pipeline.conformal_q):
+        metric_name, node_id = key.rsplit('_', 1)
+        if node_id not in output_dict:
+            output_dict[node_id] = {}
+            
+        output_dict[node_id][metric_name] = {
+            "predicted_values": values,
+            "conformal_q": conformal_q
+        }
+
+    output_dict["first_predicted"] = first_predicted
+    output_dict["last_predicted"] = last_predicted
+    output_dict["data_frequency"] = data_frequency
+
+    return output_dict

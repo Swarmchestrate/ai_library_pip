@@ -26,7 +26,7 @@ def get_last_window_data_and_train():
     elif pipeline_type == "itransformer":
         pipeline = iTransformer_pipeline()
     df = pd.read_parquet(parquet_path)
-    print(df.head())
+    #print(df.head())
     # Basic safety checks: parquet should contain time column and enough rows
     if df.empty:
         raise ValueError(f"No data found in parquet file: {parquet_path}")
@@ -34,7 +34,7 @@ def get_last_window_data_and_train():
         raise ValueError(f"Parquet file {parquet_path} missing required 'ts' column")
     required_rows = int((train_window + train_horizon + stride) / min(splits))
     df = pivot_df(df)
-    print(df.head())
+    #print(df.head())
     df = df.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
     if parquet_train_size:
         df = df.tail(parquet_train_size)
