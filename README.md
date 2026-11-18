@@ -91,6 +91,11 @@ After a trained model is accessible via the path, that is given in the config fi
 ```python
 predictions, first_predicted, last_predicted, data_frequency, conformal_q = infer()
 ```
+- predictions is a dictionary of metric names and horizons
+- first_predicted and last_predicted are timestamps
+- data_frequency is the horizon frequency
+- conformal_q is a list of conformal q values for the horizon (per metric, same order as dataframe and thus same order as the dicts)
+
 ### Example data ingestion to build the train parquet file using monitoring query functions (here on simulated sine data)
 ```
 import random
