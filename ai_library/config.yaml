@@ -41,8 +41,9 @@ retrain_frequency: "30m"
 data_frequency: "30s"
 #parquet_path: "data/orchestrator_data/data.parquet"
 parquet_path: "~/.local/share/ai_library/data_synth.parquet"
+inference_parquet_path: "~/.local/share/ai_library/inference_data_synth.parquet"
 #data_dir: "data/orchestrator_data/collector"
 saved_files_dir: "~/.local/share/ai_library/saved_models_synth"
 parquet_train_size: 100000
 conf_q_alpha: 0.05
-
+adwin_delta: 0.001

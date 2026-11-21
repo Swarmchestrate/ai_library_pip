@@ -56,6 +56,8 @@ def validate_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
         "data_frequency",
         "retrain_frequency",
         "saved_files_dir",
+        "adwin_delta",
+        "inference_parquet_path"
     ]
     
     # 1. Verify all required keys are present in config dict

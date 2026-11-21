@@ -11,6 +11,7 @@ from ..models.gmlp_class import gMLP_pipeline
 from ..models.xgb_class import XGBoost_pipeline
 from ..helpers.pivot_df import pivot_df
 from ..helpers.config_helper import validate_config
+from ..helpers.inference_to_parquet import ingest_to_inference_parquet
 
 def inference():
     config = validate_config()
@@ -86,6 +87,8 @@ def inference():
     )
 
     predictions = pipeline.infer(window_tensor)
+    ingest_to_inference_parquet(predictions, first_predicted.timestamp(), last_predicted.timestamp(), data_frequency)
+
     output_dict = {}
 
     for (key, values), conformal_q in zip(predictions.items(), pipeline.conformal_q):
