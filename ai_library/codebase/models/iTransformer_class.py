@@ -144,8 +144,9 @@ class iTransformer_pipeline:
         if targets is None:
             excluded_set = set(exclude_columns + ([time_column] if time_column else []))
             target_columns = [col for col in df.columns if col not in excluded_set]
-        else:
-            target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
+        
+        target_columns = [c for c in df.columns if c not in exclude_columns and any(t in c for t in targets)]
+
         required = target_columns + exclude_columns + ([time_column] if time_column else [])
         missing = [column for column in required if column not in df.columns]
         if missing:

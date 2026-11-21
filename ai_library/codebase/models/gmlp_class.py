@@ -57,11 +57,15 @@ class gMLP_pipeline:
         exclude_columns=None,
         bs=12,
     ):
+        exclude_cols = list(exclude_columns or [])
+
+        targets = [targets] if isinstance(targets, str) else targets
         if targets is None:
-            exclude_cols = list(exclude_columns or [])
             targets = [c for c in df.columns if c not in exclude_cols]
 
+        targets = [c for c in df.columns if c not in exclude_cols and any(t in c for t in targets)]
         self.target_names = targets
+        atomic_save(self.target_names, f"{self.saved_files_dir}/target_names_gmlp.pkl")
 
         X, Y, scaler_x, scaler_y = apply_sliding_window(
             df,
@@ -205,14 +209,11 @@ class gMLP_pipeline:
         atomic_save(
             self.conformal_q, f"{self.saved_files_dir}/conformal_q_gmlp.pkl"
         )
-        atomic_save(
-            self.target_names, f"{self.saved_files_dir}/target_names_gmlp.pkl"
-        )
 
         return model, rmse_test, self.conformal_q
 
     def preprocess_inference(
-        self, df, targets=None, n_past=288, exclude_columns=None
+        self, df, n_past=288, exclude_columns=None
         ):
         exclude_cols = list(exclude_columns or [])
         

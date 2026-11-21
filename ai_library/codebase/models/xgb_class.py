@@ -37,11 +37,15 @@ class XGBoost_pipeline:
         Create all sliding windows first and then split
         the resulting samples into train/val/test.
         """
+        exclude_cols = list(exclude_columns or [])
+
+        targets = [targets] if isinstance(targets, str) else targets
 
         if targets is None:
-            exclude_cols = list(exclude_columns or [])
-            targets = [c for c in df.columns if c not in exclude_columns]
-        self.target_names = targets
+            targets = [c for c in df.columns if c not in exclude_cols]
+
+        self.target_names = [c for c in df.columns if c not in exclude_cols and any(t in c for t in targets)]
+
         atomic_save(self.target_names, f"{self.saved_files_dir}/target_names_xgb.pkl")
 
         X, Y, scaler_x, scaler_y = apply_sliding_window(
