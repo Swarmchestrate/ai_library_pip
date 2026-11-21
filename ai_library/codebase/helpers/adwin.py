@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import pickle 
 from river import drift
+from ..helpers.pivot_df import pivot_df
+from ..helpers.to_saved_files import atomic_save
 
 def load_parquet(parquet_path):
     if not os.path.exists(parquet_path):
@@ -25,22 +27,21 @@ def load_state(state_path):
         state = pickle.load(f)
     return state.get("detectors", {}), state.get("last_ts")
 
-def save_state_atomic(state_path, detectors, last_ts):
-    tmp_path = f"{state_path}.tmp.{os.getpid()}"
-    with open(tmp_path, "wb") as f:
-        pickle.dump({"detectors": detectors, "last_ts": last_ts}, f, protocol=pickle.HIGHEST_PROTOCOL)
-    os.replace(tmp_path, state_path)
-
 def apply_adwin():
+    '''returns True, if drift was detected, else False'''
     config = validate_config()
     saved_files_dir = os.path.expanduser(config.get("saved_files_dir"))
     os.makedirs(saved_files_dir, exist_ok=True)
     state_path = os.path.join(saved_files_dir, "adwin_state.pkl")
     parquet_path = os.path.expanduser(config.get("parquet_path"))
     parquet_path_inference = os.path.expanduser(config.get("inference_parquet_path"))
-    df_true = load_parquet(parquet_path)
-    df_preds = load_parquet(parquet_path_inference)
-
+    try:
+        df_true = load_parquet(parquet_path)
+        df_true = pivot_df(df_true)
+        df_true = df_true.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
+        df_preds = load_parquet(parquet_path_inference)
+    except:
+        return "dataframes are empty"
     #find an adwin window where both dataframes have the same timestamps
     common_timestamps = pd.merge(df_true, df_preds, on="ts", how="inner")["ts"]
     if common_timestamps.empty:
@@ -59,7 +60,7 @@ def apply_adwin():
     )
 
     if merged.empty:
-        raise ValueError("No common timestamps found between true and predicted dataframes.")
+        return "No common timestamps found between true and predicted dataframes."
 
     detectors, last_ts = load_state(state_path)
     if last_ts is not None:
@@ -71,10 +72,13 @@ def apply_adwin():
 
     drift_detected_any = False
 
-    for row in merged.itertuples(index=False):
+    true_arrays = {col: merged[f"{col}_true"].to_numpy() for col in common_column_names}
+    pred_arrays = {col: merged[f"{col}_pred"].to_numpy() for col in common_column_names}
+
+    for idx in range(len(merged)):
         for col in common_column_names:
-            t_val = getattr(row, f"{col}_true")
-            p_val = getattr(row, f"{col}_pred")
+            t_val = true_arrays[col][idx]
+            p_val = pred_arrays[col][idx]
 
             if pd.isna(t_val) or pd.isna(p_val):
                 continue
@@ -85,8 +89,9 @@ def apply_adwin():
             if detectors[col].drift_detected:
                 drift_detected_any = True
 
-    if drift_detected_any:
-        print("drift detected")
-
     new_last_ts = merged["ts"].iloc[-1] if not merged.empty else last_ts
-    save_state_atomic(state_path, detectors, new_last_ts)
+    atomic_save({"detectors": detectors, "last_ts": new_last_ts}, final_path = state_path)
+
+    if drift_detected_any:
+        return True
+    return False

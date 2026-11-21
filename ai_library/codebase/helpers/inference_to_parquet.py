@@ -10,8 +10,18 @@ def get_inference_parquet_path():
 def ingest_to_inference_parquet(predictions, first_prediction_timestamp, last_prediction_timestamp, frequency):
     inference_parquet_path = get_inference_parquet_path()
     new_data = pd.DataFrame(predictions)
-    timestamps = pd.date_range(start=first_prediction_timestamp, end=last_prediction_timestamp, freq=frequency)
-    new_data["ts"] = pd.to_datetime(timestamps, unit="s", utc=True)
+    if new_data.empty:
+        raise ValueError("Predictions contain no rows to timestamp.")
+
+    start = pd.to_datetime(first_prediction_timestamp, unit="s", utc=True)
+    end = pd.to_datetime(last_prediction_timestamp, unit="s", utc=True)
+    timestamps = pd.date_range(start=start, periods=len(new_data), freq=frequency)
+    if timestamps[-1] != end:
+        raise ValueError(
+            "Prediction timestamps do not match the prediction row count and frequency: "
+            f"expected last timestamp {timestamps[-1]}, got {end}."
+        )
+    new_data["ts"] = timestamps
     if not os.path.exists(inference_parquet_path):
         new_data.to_parquet(inference_parquet_path, index=False)
     else:

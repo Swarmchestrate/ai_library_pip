@@ -11,7 +11,7 @@ _LAZY_MAP = {
 	"show_config": (".codebase.helpers.config_helper", "show_config"),
 	"train_to_cron": (".codebase.setup.cron_manager", "train_to_cron"),
 	"remove_train_from_cron": (".codebase.setup.cron_manager", "remove_train_from_cron"),
-	"train_to_cron": (".codebase.setup.cron_manager", "adwin_to_cron"),
+	"adwin_to_cron": (".codebase.setup.cron_manager", "adwin_to_cron"),
 	"remove_adwin_from_cron": (".codebase.setup.cron_manager", "remove_adwin_from_cron"),
 	"train": (".codebase.setup.train", "get_last_window_data_and_train"),
 	"infer": (".codebase.setup.infer", "inference"),
