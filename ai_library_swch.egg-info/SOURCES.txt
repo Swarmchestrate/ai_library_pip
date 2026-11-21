@@ -5,7 +5,9 @@ setup.py
 ai_library/__init__.py
 ai_library/config.yaml
 ai_library/requirements.txt
+ai_library/codebase/helpers/adwin.py
 ai_library/codebase/helpers/config_helper.py
+ai_library/codebase/helpers/inference_to_parquet.py
 ai_library/codebase/helpers/pivot_df.py
 ai_library/codebase/helpers/sliding_window.py
 ai_library/codebase/helpers/to_saved_files.py

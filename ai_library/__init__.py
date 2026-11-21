@@ -9,11 +9,14 @@ _LAZY_MAP = {
 	"validate_config": (".codebase.helpers.config_helper", "validate_config"),
 	"update_config": (".codebase.helpers.config_helper", "update_config"),
 	"show_config": (".codebase.helpers.config_helper", "show_config"),
-	"add_to_cron": (".codebase.setup.cron_manager", "add_to_cron"),
-	"remove_from_cron": (".codebase.setup.cron_manager", "remove_from_cron"),
+	"train_to_cron": (".codebase.setup.cron_manager", "train_to_cron"),
+	"remove_train_from_cron": (".codebase.setup.cron_manager", "remove_train_from_cron"),
+	"train_to_cron": (".codebase.setup.cron_manager", "adwin_to_cron"),
+	"remove_adwin_from_cron": (".codebase.setup.cron_manager", "remove_adwin_from_cron"),
 	"train": (".codebase.setup.train", "get_last_window_data_and_train"),
 	"infer": (".codebase.setup.infer", "inference"),
 	"ingest": (".codebase.setup.ingest", "ingest_metrics"),
+	"apply_adwin":  (".codebase.helpers.adwin", "apply_adwin"),
 }
 
 
