@@ -62,9 +62,10 @@ def apply_adwin():
     )
 
     if merged.empty:
-        return "No common timestamps found between true and predicted dataframes."
-
-    detectors, last_ts = load_state(state_path)
+        print("No common timestamps found between true and predicted dataframes.")
+        return False
+    
+    detectors, last_ts = load_state(state_path) 
     if last_ts is not None:
         merged = merged[merged["ts"] > last_ts].reset_index(drop=True)
 
