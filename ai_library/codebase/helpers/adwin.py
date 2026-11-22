@@ -41,7 +41,8 @@ def apply_adwin():
         df_true = df_true.set_index("ts").interpolate("linear").bfill().ffill().reset_index()
         df_preds = load_parquet(parquet_path_inference)
     except:
-        return "dataframes are empty"
+        print ("Dataframes are empty. Cannot apply adwin")
+        return False
     #find an adwin window where both dataframes have the same timestamps
     common_timestamps = pd.merge(df_true, df_preds, on="ts", how="inner")["ts"]
     if common_timestamps.empty:
