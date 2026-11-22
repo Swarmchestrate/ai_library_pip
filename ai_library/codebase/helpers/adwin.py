@@ -46,7 +46,8 @@ def apply_adwin():
     #find an adwin window where both dataframes have the same timestamps
     common_timestamps = pd.merge(df_true, df_preds, on="ts", how="inner")["ts"]
     if common_timestamps.empty:
-        raise ValueError("No common timestamps found between true and predicted dataframes.")
+        print("No common timestamps found between true and predicted dataframes.")
+        return False
     common_column_names = [col for col in df_true.columns if col in df_preds.columns and col != "ts"]
     merged = (
         pd.merge(
