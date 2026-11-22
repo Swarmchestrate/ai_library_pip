@@ -138,13 +138,11 @@ class iTransformer_pipeline:
         if any(not isinstance(value, int) or value <= 0 for value in (n_future, n_past, stride, bs)):
             raise ValueError("n_future, n_past, stride, and bs must be positive integers")
 
-        target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
-        exclude_columns = list(exclude_columns or [])
-
         if targets is None:
             excluded_set = set(exclude_columns + ([time_column] if time_column else []))
-            target_columns = [col for col in df.columns if col not in excluded_set]
-        
+            targets = [col for col in df.columns if col not in excluded_set]
+        targets = list(targets) if isinstance(targets, (list, tuple)) else [targets]
+        exclude_columns = list(exclude_columns or [])
         target_columns = [c for c in df.columns if c not in exclude_columns and any(t in c for t in targets)]
 
         required = target_columns + exclude_columns + ([time_column] if time_column else [])
@@ -274,18 +272,8 @@ class iTransformer_pipeline:
         if self.scaler_x is None:
             raise RuntimeError("data was not preprocessed; run preprocess_splits first")
 
-        if targets is None:
-            target_columns = self.target_columns
-        else:
-            target_columns = list(targets) if isinstance(targets, (list, tuple)) else [targets]
+        target_columns = self.target_columns
         
-        if target_columns != self.target_columns:
-            raise ValueError(f"targets must match training order: {self.target_columns}")
-        if n_past != self.n_past:
-            raise ValueError(f"n_past must match the trained value: {self.n_past}")
-        if len(df) < n_past:
-            raise ValueError(f"inference data must contain at least {n_past} rows")
-
         exclude_columns = list(exclude_columns or [])
         required = target_columns + exclude_columns + ([self.time_column] if self.time_column else [])
         missing = [column for column in required if column not in df.columns]

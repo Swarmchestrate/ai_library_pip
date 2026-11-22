@@ -43,8 +43,8 @@ class XGBoost_pipeline:
 
         if targets is None:
             targets = [c for c in df.columns if c not in exclude_cols]
-
-        self.target_names = [c for c in df.columns if c not in exclude_cols and any(t in c for t in targets)]
+        targets = [c for c in df.columns if c not in exclude_cols and any(t in c for t in targets)]
+        self.target_names = targets
 
         atomic_save(self.target_names, f"{self.saved_files_dir}/target_names_xgb.pkl")
 

@@ -213,7 +213,7 @@ class gMLP_pipeline:
         return model, rmse_test, self.conformal_q
 
     def preprocess_inference(
-        self, df, n_past=288, exclude_columns=None
+        self, df, targets, n_past=288, exclude_columns=None
         ):
         exclude_cols = list(exclude_columns or [])
         
