@@ -109,6 +109,7 @@ predictions shape:
             ...
             },
 {node_id_2: ...}, 
+{composite: ...}, 
 * goes on like this* 
 first_predicted: FIRST_TIMESTAMP
 last_predicted: LAST_TIMESTAMP
@@ -123,6 +124,7 @@ apply_adwin()
 ```
 - returns true, if model drift was found since last call
 - returns false else
+- saves result to saved_files_dir/last_adwin_result.pkl
 
 ### Cron Scheduling
 Add_to_cron creates a cron job that runs the train function in intervals.

@@ -33,6 +33,7 @@ def apply_adwin():
     saved_files_dir = os.path.expanduser(config.get("saved_files_dir"))
     os.makedirs(saved_files_dir, exist_ok=True)
     state_path = os.path.join(saved_files_dir, "adwin_state.pkl")
+    result_path = os.path.join(saved_files_dir, "last_adwin_result.pkl")
     parquet_path = os.path.expanduser(config.get("parquet_path"))
     parquet_path_inference = os.path.expanduser(config.get("inference_parquet_path"))
     try:
@@ -94,7 +95,6 @@ def apply_adwin():
 
     new_last_ts = merged["ts"].iloc[-1] if not merged.empty else last_ts
     atomic_save({"detectors": detectors, "last_ts": new_last_ts}, final_path = state_path)
+    atomic_save(bool(drift_detected_any), final_path=result_path)
+    return bool(drift_detected_any)
 
-    if drift_detected_any:
-        return True
-    return False
