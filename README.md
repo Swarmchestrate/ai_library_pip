@@ -371,7 +371,7 @@ for i in range(24):
     # Update start timestamp for the next batch cleanly
     start_timestamp = raw_data[ips[0]][-1]["timestamp"] + 15.0
 
-predictions = infer() #now it should become true
+predictions = infer() #now it should become true (big pred error shift)
 print(apply_adwin())
 
 
@@ -396,7 +396,7 @@ for i in range(24):
     start_timestamp = raw_data[ips[0]][-1]["timestamp"] + 15.0
 
 predictions = infer()
-print(apply_adwin())
+print(apply_adwin()) #from here on prediction error shift might not be large, so False is also fine
 
 
 for i in range(24):
