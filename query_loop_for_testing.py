@@ -94,7 +94,7 @@ for i in range(200):
 predictions = infer()
 print(apply_adwin())
 
-for i in range(30):
+for i in range(24):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -115,7 +115,7 @@ predictions = infer()
 print(apply_adwin())
 
 
-for i in range(30):
+for i in range(24):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -139,7 +139,7 @@ predictions = infer()
 print(apply_adwin())
 
 
-for i in range(30):
+for i in range(24):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -163,7 +163,7 @@ predictions = infer()
 print(apply_adwin())
 
 
-for i in range(30):
+for i in range(24):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
