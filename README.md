@@ -125,6 +125,9 @@ apply_adwin()
 - returns true, if model drift was found since last call
 - returns false else
 - saves result to saved_files_dir/last_adwin_result.pkl
+- play around with adwin_delta
+    - low: less sensitive
+    - hight: more sensitive but also more false alarms
 
 ### Cron Scheduling
 Add_to_cron creates a cron job that runs the train function in intervals.
