@@ -307,7 +307,7 @@ from ai_library import apply_adwin
 train()
 predictions = infer()
 
-for i in range(200):
+for i in range(30):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -327,7 +327,7 @@ for i in range(200):
 predictions = infer()
 print(apply_adwin()) #should be false, no data drift added
 
-for i in range(200):
+for i in range(30):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -348,7 +348,7 @@ predictions = infer()
 print(apply_adwin()) #should still be false, no data drift added
 
 
-for i in range(200):
+for i in range(30):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -372,7 +372,7 @@ predictions = infer() #now it should become true
 print(apply_adwin())
 
 
-for i in range(200):
+for i in range(30):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
@@ -396,7 +396,7 @@ predictions = infer()
 print(apply_adwin())
 
 
-for i in range(200):
+for i in range(30):
     num_points = random.randint(3, 8)
     
     # Generate synchronized data
