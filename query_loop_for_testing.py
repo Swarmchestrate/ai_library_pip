@@ -3,7 +3,7 @@ from ai_library import ingest
 from ai_library import train,infer, show_config, update_config
 import numpy as np
 
-paths = ["~/.local/share/ai_library/data_synth.parquet", "~/.local/share/ai_library/inference_data_synth.parquet"]
+paths = ["~/.local/share/ai_library/saved_models_synth/adwin_state.pkl","~/.local/share/ai_library/data_synth.parquet", "~/.local/share/ai_library/inference_data_synth.parquet"]
 import os
 for path in paths:
     file_path = os.path.expanduser(path)
