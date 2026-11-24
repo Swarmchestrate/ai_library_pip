@@ -43,11 +43,13 @@ def apply_adwin():
         df_preds = load_parquet(parquet_path_inference)
     except:
         print ("Dataframes are empty. Cannot apply adwin")
+        atomic_save(False, final_path=result_path)
         return False
     #find an adwin window where both dataframes have the same timestamps
     common_timestamps = pd.merge(df_true, df_preds, on="ts", how="inner")["ts"]
     if common_timestamps.empty:
         print("No common timestamps found between true and predicted dataframes.")
+        atomic_save(False, final_path=result_path)
         return False
     common_column_names = [col for col in df_true.columns if col in df_preds.columns and col != "ts"]
     merged = (
@@ -64,6 +66,7 @@ def apply_adwin():
 
     if merged.empty:
         print("No common timestamps found between true and predicted dataframes.")
+        atomic_save(False, final_path=result_path)
         return False
     
     detectors, last_ts = load_state(state_path) 
